@@ -1,0 +1,42 @@
+﻿# ==========================================
+# C++ / MSVC Binari e File di Compilazione
+# ==========================================
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.vc.db
+build/
+
+# ==========================================
+# File Ausiliari e Temporanei di LaTeX
+# ==========================================
+*.aux
+*.bcf
+*.bbl
+*.blg
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.fls
+*.fdb_latexmk
+
+# ==========================================
+# IDE e Configurazioni Editor
+# ==========================================
+.vscode/
+.vs/
+
+# ==========================================
+# Sistema Operativo
+# ==========================================
+Thumbs.db
+Desktop.ini
+.DS_Store
