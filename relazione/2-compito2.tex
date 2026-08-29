@@ -1,7 +1,36 @@
 \section{Compito 2}
 
 \subsection{Codifica dei due algritmi}
+L'implementazione dello pseudocodice è stata fatta in C++ nella segeuente maniera:
+\begin{itemize}
+    \item \textbf{Types.hpp}: Definisce i tipi di dati utilizzati (es. CellType, Action, etc...)
+    \item \textbf{GridMDP.hpp}: Definizione delle firme dei metodi che verranno implementati in \textbf{GridMDP.cpp}
+    \item \textbf{GridMDP.cpp}: Implementazione dei metodi definiti in \textbf{GridMDP.hpp} (gridValueIteration e constructOptimalPath sono l'implementazione esatta dei due pseudocodici della scorsa sezione)
+    \item \textbf{main.cpp}: Contiene il main e la logica per leggere i file di input e stampare i risultati
+\end{itemize}
 
-\subsection{Variante In-Place (Gauss-Seidel)}
+\subsection{Variante In-Place}
+A differenza della versione standard (\texttt{gridValueIteration}), che calcola i nuovi valori basandosi su una copia congelata della matrice dell'iterazione precedente (\texttt{V\_old}) secondo uno schema di aggiornamento sincrono, la variante in-place \\(\texttt{gridValueIterationInPlace}) aggiorna la funzione valore in modo asincrono.
+
+\noindent
+La modifica sintattica e concettuale risiede nella gestione della memoria e della lettura dei dati:
+\begin{itemize}
+    \item \textbf{Eliminazione della copia di matrice}: Non viene più allocata né duplicata la matrice $N \times N$ all'inizio di ogni iterazione del ciclo \texttt{while}.
+    \item \textbf{Copia locale dello stato}: All'interno dei cicli di scansione, viene salvato solo il valore scalare della singola cella correntemente in esame (\texttt{double v\_old = V[r][c]}), necessario per calcolare la variazione assoluta $\Delta = |v_{old} - V(s)|$.
+    \item \textbf{Aggiornamento in tempo reale}: Il nuovo valore di utilità $V(s) = \max_a Q(s, a)$ viene sovrascritto immediatamente nella matrice condivisa $V$.
+\end{itemize}
+
+\noindent
+Di conseguenza, quando l'algoritmo valuta lo stato successivo $s'$ per calcolare $q = R + \gamma \cdot V(s')$, legge i dati direttamente dalla matrice $V$ in tempo reale. Se la cella adiacente $s'$ è già stata elaborata durante la scansione corrente, l'algoritmo utilizzerà il suo valore già aggiornato al ciclo attuale anziché quello dell'iterazione precedente.
 
 \subsection{Vantaggi della Variante In-Place}
+Nonostante entrambe le varianti garantiscano la convergenza alla medesima funzione valore ottimale $V^*$ e alla relativa politica $\pi^*$, l'approccio in-place offre rilevanti vantaggi pratici e computazionali:
+
+\begin{enumerate}
+    \item \textbf{Maggiore velocità di convergenza}: 
+    Nella variante standard sincrona, il valore di una cella (es. la ricompensa del Goal) può propagarsi verso i vicini al massimo di una cella per ogni iterazione del ciclo \texttt{while}. Con l'aggiornamento in-place, si innesca un effetto a catena: se l'ordine di scansione incontra una cella adiacente a una già aggiornata, recepisce immediatamente la novità. Questo permette all'informazione di propagarsi lungo più celle nella stessa iterazione, riducendo drasticamente il numero totale di cicli necessari a soddisfare la condizione di arresto $\Delta < \epsilon$.
+
+    \item \textbf{Efficienza di memoria}: 
+    Eliminando la duplicazione continua dell'intera griglia ad ogni iterazione, la complessità spaziale ausiliaria si riduce da $O(N^2)$ a $O(1)$, richiedendo soltanto una variabile temporanea di tipo \texttt{double}.
+
+\end{enumerate}
