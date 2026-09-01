@@ -5,7 +5,6 @@
 #include <string_view>
 #include <vector>
 
-// 1. Enum fortemente tipizzati (Scoped Enums)
 enum class CellType : int { 
     LIBERA = 0, 
     OSTACOLO = 1 
@@ -19,12 +18,10 @@ enum class Action : int {
     NONE = -1 
 };
 
-// 2. Struttura Position 
 struct Position {
     int r{0};
     int c{0};
 
-    // Operatori di confronto
     constexpr bool operator==(const Position& other) const noexcept {
         return r == other.r && c == other.c;
     }
@@ -34,7 +31,6 @@ struct Position {
     }
 };
 
-// 3. Funzione di utilità inline con constexpr e std::string_view
 constexpr std::string_view actionToString(Action a) noexcept {
     switch (a) {
         case Action::NORD:  return "^";
@@ -45,7 +41,6 @@ constexpr std::string_view actionToString(Action a) noexcept {
     }
 }
 
-// 4. Type Aliases espressivi
 using Grid = std::vector<std::vector<int>>;
 using ValueMatrix = std::vector<std::vector<double>>;
 using PolicyMatrix = std::vector<std::vector<Action>>;

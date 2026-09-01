@@ -4,9 +4,37 @@
 #include <chrono>
 #include <iomanip>
 #include <string>
-#include "GridMDP.hpp"
+#include <functional>
 
-// Funzione per caricare la griglia da file di testo
+#include "GridMDP.hpp"
+#include "MemoryTracker.hpp"
+
+// Struttura per memorizzare le metriche di benchmark
+struct BenchmarkResult {
+    int iterations{0};
+    double time_ms{0.0};
+    double memory_extra_kb{0.0};
+};
+
+// Funzione generica per misurare l'esecuzione di un algoritmo di risoluzione
+template <typename SolverFunc>
+BenchmarkResult measurePerformance(SolverFunc solver, int N) {
+    ValueMatrix V(N, std::vector<double>(N, 0.0));
+    PolicyMatrix pi(N, std::vector<Action>(N, Action::NONE));
+
+    MemoryTracker mem_tracker;
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    int iters = solver(V, pi);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    double elapsed_time = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+    double peak_memory = mem_tracker.getPeakAllocatedKB();
+
+    return {iters, elapsed_time, peak_memory};
+}
+
 bool loadGridFromFile(const std::string& filename, int& N, Position& S, Position& G, Grid& grid) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -14,33 +42,44 @@ bool loadGridFromFile(const std::string& filename, int& N, Position& S, Position
         return false;
     }
 
-    file >> N;
-    file >> S.r >> S.c;
-    file >> G.r >> G.c;
-
+    file >> N >> S.r >> S.c >> G.r >> G.c;
     grid.assign(N, std::vector<int>(N, 0));
+
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
             file >> grid[r][c];
         }
     }
 
-    file.close();
     return true;
+}
+
+void printHeader(std::ostream& os) {
+    os << "========================================================================================\n";
+    os << "                        BENCHMARK SPERIMENTALE: COMPITO 3                               \n";
+    os << "========================================================================================\n";
+    os << std::left 
+       << std::setw(8)  << "N"
+       << std::setw(14) << "Variante"
+       << std::setw(14) << "Iterazioni"
+       << std::setw(18) << "Tempo (ms)"
+       << std::setw(20) << "Memoria Extra (KB)" << "\n";
+    os << std::string(74, '-') << "\n";
+}
+
+void printRow(std::ostream& os, int N, const std::string& variant, const BenchmarkResult& res) {
+    os << std::left 
+       << std::setw(8)  << N
+       << std::setw(14) << variant
+       << std::setw(14) << res.iterations
+       << std::setw(18) << std::fixed << std::setprecision(3) << res.time_ms
+       << std::setw(20) << std::fixed << std::setprecision(2) << res.memory_extra_kb << "\n";
 }
 
 int main() {
     const std::vector<std::string> input_files = {
-        "grid_1.txt",
-        "grid_2.txt",
-        "grid_3.txt",
-        "grid_4.txt",
-        "grid_5.txt",
-        "grid_6.txt",
-        "grid_7.txt",
-        "grid_8.txt",
-        "grid_9.txt",
-        "grid_10.txt"
+        "grid_1.txt", "grid_2.txt", "grid_3.txt", "grid_4.txt", "grid_5.txt",
+        "grid_6.txt", "grid_7.txt", "grid_8.txt", "grid_9.txt", "grid_10.txt"
     };
 
     const std::string output_filename = "risultati_benchmark.txt";
@@ -51,22 +90,8 @@ int main() {
         return 1;
     }
 
-    const double gamma = 0.95;
-    const double eps = 1e-4;
-
-    // Intestazione tabella per stdout e file
-    auto printHeader = [](std::ostream& os) {
-        os << "========================================================================================\n";
-        os << "                        BENCHMARK SPERIMENTALE: COMPITO 3                               \n";
-        os << "========================================================================================\n";
-        os << std::left 
-           << std::setw(8)  << "N"
-           << std::setw(14) << "Variante"
-           << std::setw(14) << "Iterazioni"
-           << std::setw(18) << "Tempo (ms)"
-           << std::setw(20) << "Memoria Extra (KB)" << "\n";
-        os << std::string(74, '-') << "\n";
-    };
+    constexpr double gamma = 0.95;
+    constexpr double eps = 1e-4;
 
     printHeader(std::cout);
     printHeader(outFile);
@@ -77,50 +102,25 @@ int main() {
         Grid grid;
 
         if (!loadGridFromFile(file_path, N, S, G, grid)) {
-            continue; // Salta il file se non viene trovato
+            continue;
         }
 
-        // ---------------------------------------------------------
-        // 1. Esecuzione Variante Standard (Jacobi)
-        // ---------------------------------------------------------
-        ValueMatrix V_std;
-        PolicyMatrix pi_std;
+        //Misurazione Variante Standard (
+        auto res_std = measurePerformance([&](ValueMatrix& V, PolicyMatrix& pi) {
+            return gridValueIteration(grid, N, G, gamma, eps, V, pi);
+        }, N);
 
-        auto t1_start = std::chrono::high_resolution_clock::now();
-        int iters_std = gridValueIteration(grid, N, G, gamma, eps, V_std, pi_std);
-        auto t1_end = std::chrono::high_resolution_clock::now();
+        //Misurazione Variante In-Place 
+        auto res_ip = measurePerformance([&](ValueMatrix& V, PolicyMatrix& pi) {
+            return gridValueIterationInPlace(grid, N, G, gamma, eps, V, pi);
+        }, N);
 
-        double time_std = std::chrono::duration<double, std::milli>(t1_end - t1_start).count();
-        double mem_std_kb = (N * N * sizeof(double)) / 1024.0;
+        // Output dei risultati
+        printRow(std::cout, N, "Standard", res_std);
+        printRow(outFile,   N, "Standard", res_std);
 
-        // ---------------------------------------------------------
-        // 2. Esecuzione Variante In-Place (Gauss-Seidel)
-        // ---------------------------------------------------------
-        ValueMatrix V_ip;
-        PolicyMatrix pi_ip;
-
-        auto t2_start = std::chrono::high_resolution_clock::now();
-        int iters_ip = gridValueIterationInPlace(grid, N, G, gamma, eps, V_ip, pi_ip);
-        auto t2_end = std::chrono::high_resolution_clock::now();
-
-        double time_ip = std::chrono::duration<double, std::milli>(t2_end - t2_start).count();
-        double mem_ip_kb = sizeof(double) / 1024.0;
-
-        // Lambda per stampare la riga sia a schermo sia su file
-        auto printRow = [&](std::ostream& os, const std::string& var, int iters, double time, double mem) {
-            os << std::left 
-               << std::setw(8)  << N
-               << std::setw(14) << var
-               << std::setw(14) << iters
-               << std::setw(18) << std::fixed << std::setprecision(3) << time
-               << std::setw(20) << std::fixed << std::setprecision(2) << mem << "\n";
-        };
-
-        printRow(std::cout, "Standard", iters_std, time_std, mem_std_kb);
-        printRow(outFile,   "Standard", iters_std, time_std, mem_std_kb);
-
-        printRow(std::cout, "In-Place", iters_ip, time_ip, mem_ip_kb);
-        printRow(outFile,   "In-Place", iters_ip, time_ip, mem_ip_kb);
+        printRow(std::cout, N, "In-Place", res_ip);
+        printRow(outFile,   N, "In-Place", res_ip);
 
         std::cout << std::string(74, '-') << "\n";
         outFile   << std::string(74, '-') << "\n";

@@ -5,7 +5,7 @@
 #include <limits>
 #include <iomanip>
 
-// Spostamenti relativi (dr, dc) per NORD, SUD, EST, OVEST
+// Spostamenti relativi per NORD, SUD, EST, OVEST (da leggere per colonna, es Nord è dato da DR[0], DC[0])
 constexpr int DR[4] = {-1, 1, 0, 0};
 constexpr int DC[4] = {0, 0, 1, -1};
 
@@ -133,13 +133,13 @@ std::vector<Position> constructOptimalPath(
     while (s_curr != G && steps < max_steps) {
         Action a_star = pi[s_curr.r][s_curr.c];
         if (a_star == Action::NONE) {
-            std::cerr << "[ERRORE] Azione ottima non definita per la cella (" << s_curr.r << ", " << s_curr.c << ")\n";
+            std::cerr << "[ERRORE] Impossibile raggiungere il goal: mossa ottima non definita (" << s_curr.r << ", " << s_curr.c << ")\n";
             return {};
         }
 
         Position s_next = getNextState(grid, s_curr, a_star, N);
         if (s_next == s_curr) {
-            std::cerr << "[ERRORE] Stallo rilevato nella cella (" << s_curr.r << ", " << s_curr.c << ")\n";
+            std::cerr << "[ERRORE] La mossa ottima conduce contro un ostacolo o un bordo (" << s_curr.r << ", " << s_curr.c << ")\n";
             return {};
         }
 
@@ -149,7 +149,7 @@ std::vector<Position> constructOptimalPath(
     }
 
     if (s_curr != G) {
-        std::cerr << "[ERRORE] Goal non raggiunto entro il numero massimo di passi (" << max_steps << ")\n";
+        std::cerr << "[ERRORE] Goal non raggiungibile entro il numero massimo di passi consentiti (" << max_steps << ")\n";
         return {};
     }
 
@@ -169,7 +169,6 @@ void printValueMatrix(const ValueMatrix& V, int N) {
 void printPolicyMatrix(const PolicyMatrix& pi, int N) {
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
-            // actionToString restituisce un std::string_view
             std::cout << "  " << actionToString(pi[r][c]) << "  ";
         }
         std::cout << "\n";

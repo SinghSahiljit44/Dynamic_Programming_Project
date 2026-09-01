@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 
-// Funzione di utilità per salvare la griglia su file
 void saveGridToFile(const std::string& filename, int N, std::pair<int,int> S, std::pair<int,int> G, const std::vector<std::vector<int>>& grid) {
     std::ofstream outFile(filename);
     if (!outFile.is_open()) {
@@ -67,7 +66,9 @@ void generateSpiral(int N, const std::string& filename) {
     for (int l = 1; l <= layers; ++l) {
         int top = 2 * l, bottom = N - 1 - 2 * l;
         int left = 2 * l, right = N - 1 - 2 * l;
-        if (top >= bottom || left >= right) break;
+        
+        // CONDIFIX: Blocca la spirale prima che soffochi il Goal centrale
+        if (top >= bottom - 1 || left >= right - 1) break;
 
         for (int c = left; c <= right; ++c) grid[top][c] = 1;
         for (int r = top; r <= bottom; ++r) grid[r][right] = 1;
@@ -116,8 +117,9 @@ void generateRings(int N, const std::string& filename) {
 // 6. Pilastri Spessi
 void generatePillars(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
-    for (int r = 2; r < N - 2; r += 5) {
-        for (int c = 2; c < N - 2; c += 5) {
+    // CONDIFIX: limite r < N - 3 per non toccare il Goal a (N-1, N-1)
+    for (int r = 2; r < N - 3; r += 5) {
+        for (int c = 2; c < N - 3; c += 5) {
             for (int dr = 0; dr < 3; ++dr) {
                 for (int dc = 0; dc < 3; ++dc) {
                     grid[r + dr][c + dc] = 1;

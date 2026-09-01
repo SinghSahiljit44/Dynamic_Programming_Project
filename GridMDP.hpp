@@ -3,7 +3,6 @@
 #include "Types.hpp"
 #include <vector>
 
-// Type Aliases per leggibilità
 using Grid = std::vector<std::vector<int>>;
 using ValueMatrix = std::vector<std::vector<double>>;
 using PolicyMatrix = std::vector<std::vector<Action>>;
@@ -16,7 +15,7 @@ double getReward(Position s, Action a, Position s_next, Position G);
 
 // --- Algoritmi di Risoluzione (Value Iteration) ---
 
-// Algoritmo 1: Standard Jacobi Value Iteration (restituisce il numero di iterazioni K)
+// Algoritmo 1: Standard 
 int gridValueIteration(
     const Grid& grid, 
     int N, 
@@ -27,7 +26,7 @@ int gridValueIteration(
     PolicyMatrix& pi
 );
 
-// Algoritmo 1 (Variante): In-Place Gauss-Seidel Value Iteration
+// Algoritmo 1 (Variante): In-Place 
 int gridValueIterationInPlace(
     const Grid& grid, 
     int N, 
@@ -38,7 +37,7 @@ int gridValueIterationInPlace(
     PolicyMatrix& pi
 );
 
-// --- Algoritmo 2: Costruzione della soluzione ottima ---
+//Algoritmo 2: Costruzione della soluzione ottima 
 
 std::vector<Position> constructOptimalPath(
     Position S, 
@@ -47,8 +46,6 @@ std::vector<Position> constructOptimalPath(
     const Grid& grid, 
     int N
 );
-
-// --- Utility di Visualizzazione ---
 
 void printValueMatrix(const ValueMatrix& V, int N);
 void printPolicyMatrix(const PolicyMatrix& pi, int N);
