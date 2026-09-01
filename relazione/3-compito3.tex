@@ -4,7 +4,7 @@
 La valutazione delle prestazioni è stata condotta su un set di 10 istanze fisse caricate da file (\texttt{grid\_1.txt} \dots \texttt{grid\_10.txt}) aventi dimensioni crescenti \\ $N \in \{20, 25, 30, 40, 50, 60, 70, 80, 100, 120\}$, corrispondenti a uno spazio degli stati $|S| = N^2$ che varia da 400 a 14.400 celle. 
 
 \noindent
-Le topologie analizzate includono strutture non banali quali serpentine, labirinti a pettine, stanze multiple con colli di bottiglia, spirali concentriche e trappole a U. Per ciascuna istanza sono stati misurati il numero di iterazioni fino alla convergenza.
+Le topologie analizzate includono strutture non banali quali serpentine, labirinti a pettine, stanze multiple con colli di bottiglia, spirali concentriche e trappole a U (per visualizzarle basta aprire i relativi file txt presenti nella directory di progetto). 
 
 \subsection{Piattaforma utilizzata}
 Per la compilazione del codice si è usato MSVC di Microsoft.\\
@@ -53,26 +53,26 @@ I dati raccolti durante l'esecuzione del benchmark sono riassunti nella seguente
 Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi asintotica teorica svolta nel Compito 1. Di seguito viene evidenziata la corrispondenza diretta tra i valori teorici e i dati misurati:
 
 \begin{itemize}
-    \item \textbf{Complessità Spaziale Ausiliaria}:
+    \item \textbf{Complessità Spaziale}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: Standard = $\Theta(N^2)$, In-Place = $\mathcal{O}(1)$.
+        \item \textit{Valore Teorico}: Standard = $\Theta(N^2)$, In-Place = $\Theta(1)$.
         \item \textit{Valore Misurato}: Consideriamo l'istanza $N=80$ ($6.400$ stati): la variante Standard alloca esattamente $\frac{80^2 \times 8 \text{ byte}}{1024} = 50{,}00\text{ KB}$ di memoria extra, mentre la variante In-Place registra un'occupazione costante e trascurabile ($\approx 0{,}01\text{ KB}$). Questa corrispondenza matematica è confermata sul $100\%$ delle istanze testate.
     \end{itemize}
 
-    \item \textbf{Tempo di Esecuzione per Singolo Sweep}:
+    \item \textbf{Tempo di Esecuzione per una iterazione}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: $\Theta(N^2)$ per singola iterazione (scansione di $N^2$ celle valutando 4 azioni in tempo costante).
-        \item \textit{Valore Misurato}: Calcolando il tempo medio di un singolo sweep ($t_{\text{sweep}} = T/K$), il costo cresce in modo quadratico rispetto a $N$. Ad esempio, confrontando la versione Standard tra $N=40$ ($1.600$ celle) e $N=120$ ($14.400$ celle):
+        \item \textit{Valore Teorico}: $\Theta(N^2)$ 
+        \item \textit{Valore Misurato}: Calcolando il tempo medio di una singola iterazione ($t_{\text{iteration}} = T/K$), il costo cresce in modo quadratico rispetto a $N$. \\Ad esempio, confrontando la versione Standard tra $N=40$ ($1.600$ celle) e $N=120$ ($14.400$ celle):
         \begin{itemize}
-            \item Per $N=40$: $t_{\text{sweep}} = \frac{18{,}20 \text{ ms}}{271} \approx 0{,}067 \text{ ms}$ per sweep.
-            \item Per $N=120$: $t_{\text{sweep}} = \frac{195{,}03 \text{ ms}}{271} \approx 0{,}720 \text{ ms}$ per sweep.
+            \item Per $N=40$: $t_{\text{iteration}} = \frac{18{,}20 \text{ ms}}{271} \approx 0{,}067 \text{ ms}$ per iterazione.
+            \item Per $N=120$: $t_{\text{iteration}} = \frac{195{,}03 \text{ ms}}{271} \approx 0{,}720 \text{ ms}$ per iterazione.
         \end{itemize}
-        A fronte di un aumento delle celle pari a $9$ volte ($\frac{14.400}{1.600}$), il tempo di un singolo sweep aumenta di circa $10{,}7$ volte ($\frac{0{,}720}{0{,}067}$), confermando sperimentalmente l'andamento teorico $\Theta(N^2)$.
+        A fronte di un aumento delle celle pari a $9$ volte ($\frac{14.400}{1.600}$), il tempo di una singola iterazione aumenta di circa $10{,}7$ volte ($\frac{0{,}720}{0{,}067}$), confermando sperimentalmente l'andamento teorico $\Theta(N^2)$.
     \end{itemize}
 
-    \item \textbf{Complessità Temporale Complessiva e Convergenza}:
+    \item \textbf{Complessità Temporale Complessiva}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: $T(N, K) = \mathcal{O}(K \cdot N^2)$, con la proprietà teorica $K_{\text{In-Place}} \le K_{\text{Standard}}$.
+        \item \textit{Valore Teorico}: $T(N, K) = \Theta(K \cdot N^2)$, con la proprietà teorica $K_{\text{In-Place}} \le K_{\text{Standard}}$.
         \item \textit{Valore Misurato}: La disuguaglianza $K_{\text{In-Place}} \le K_{\text{Standard}}$ è verificata in tutte le 10 istanze senza alcuna eccezione. Nell'istanza $N=40$, l'aggiornamento In-Place riduce le iterazioni da 271 a 122 ($-55\%$) con un crollo del tempo da $18{,}20\text{ ms}$ a $7{,}62\text{ ms}$. In casi come $N=60$, dove le iterazioni coincidono ($K=119$), l'In-Place risulta comunque più veloce ($31{,}56\text{ ms}$ vs $33{,}45\text{ ms}$) grazie all'eliminazione dell'overhead di copia in memoria.
     \end{itemize}
 \end{itemize}
@@ -81,11 +81,11 @@ Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi as
 L'analisi dei dati empirici permette di trarre le seguenti conclusioni sulle prestazioni dei due algoritmi:
 
 \begin{enumerate}
-    \item \textbf{Accelerazione della Convergenza (Gauss-Seidel vs Jacobi)}: Nelle istanze caratterizzate da percorsi guidati e corridoi orientati favorevolmente rispetto alla scansione (es. $N=20, 30, 40, 50, 120$), la variante \textbf{In-Place} abbatte notevolmente il numero di iterazioni. Per $N=40$ il numero di cicli scende da 271 a 122 ($-55\%$), mentre per $N=120$ scende da 271 a 161 ($-40.6\%$). L'aggiornamento immediato degli stati consente infatti al valore di propagarsi lungo più celle adiacenti già all'interno del medesimo sweep.
+    \item \textbf{Accelerazione della Convergenza}: Nelle istanze caratterizzate da percorsi guidati e corridoi orientati favorevolmente rispetto alla scansione (es. $N=20, 30, 40, 50, 120$), la variante \textbf{In-Place} abbatte notevolmente il numero di iterazioni. Per $N=40$ il numero di cicli scende da 271 a 122 ($-55\%$), mentre per $N=120$ scende da 271 a 161 ($-40.6\%$). L'aggiornamento immediato degli stati consente infatti al valore di propagarsi lungo più celle adiacenti già all'interno della medesima iterazione.
 
     \item \textbf{Impatto della Geometria degli Ostacoli}: Nelle istanze $N \in \{25, 60, 80, 100\}$, entrambe le varianti richiedono lo stesso numero di cicli. Questo fenomeno si verifica quando i muri e i colli di bottiglia costringono la funzione valore a propagarsi in direzione opposta rispetto al verso dei cicli \texttt{for} (da in alto a sinistra verso in basso a destra), rendendo temporaneamente inefficace l'effetto a catena dell'In-Place.
 
     \item \textbf{Efficienza Temporale ed Eliminazione degli Overhead}: L'algoritmo In-Place risulta sistematicamente più rapido. Nei casi con forte riduzione di iterazioni, il tempo si dimezza quasi (es. per $N=120$ si passa da 195.03 ms a 113.94 ms). Anche nei casi a parità di iterazioni (es. $N=100$), l'In-Place mantiene un leggero vantaggio (147.67 ms vs 150.51 ms) derivante dall'eliminazione dell'operazione di copia blocco in memoria \texttt{V\_old = V}.
 
-    \item \textbf{Occupazione di Memoria Ausiliaria}: Viene confermata la complessità spaziale teorica. La variante Standard scala quadraticamente fino a richiedere 112.50 KB extra per $N=120$, mentre la variante In-Place lavora direttamente sulla matrice principale con un footprint ausiliario costante di appena $\approx 0.01\text{ KB}$ ($O(1)$).
+    \item \textbf{Occupazione di Memoria Ausiliaria}: Viene confermata la complessità spaziale teorica. La variante Standard scala quadraticamente fino a richiedere 112.50 KB extra per $N=120$, mentre la variante In-Place lavora direttamente sulla matrice principale con un footprint ausiliario costante di appena $\approx 0.01\text{ KB}$.
 \end{enumerate}

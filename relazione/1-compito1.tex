@@ -262,8 +262,7 @@ La complessità temporale di \texttt{CONSTRUCT-OPTIMAL-PATH} è quindi proporzio
 \[
 T_{\text{Construct-Path}}(L) = \Theta(L)
 \]
-Nel caso peggiore in cui il cammino ottimo attraversi la quasi totalità delle celle libere della griglia ($L = \Theta(N^2)$), la complessità temporale si attesta a $\Theta(N^2)$.
-
+Nel caso peggiore in cui il cammino ottimo attraversi la quasi totalità delle celle libere della griglia allora $L=N^2$, altrimenti nel caso migliore abbiamo $L=1$. Di conseguenza possiamo affermare che la complessità temporale sia compresa, in generale, fra $\Omega(1)$ e $O(N^2)$.
 \paragraph{Complessità Temporale Complessiva dell'intero procedimento:}
 \[
 T_{\text{Totale}}(N, K, L) = \Theta(K \cdot N^2) + \Theta(L) = \Theta(K \cdot N^2)
@@ -271,8 +270,6 @@ T_{\text{Totale}}(N, K, L) = \Theta(K \cdot N^2) + \Theta(L) = \Theta(K \cdot N^
 
 \clearpage
 \subsubsection{Complessità Spaziale}
-
-La complessità spaziale misura la quantità di memoria ausiliaria allocata dalle strutture dati del programma oltre all'input di ingresso.
 
 \paragraph{1. Memoria allocata da \texttt{GRID-VALUE-ITERATION}:}
 \begin{itemize}
