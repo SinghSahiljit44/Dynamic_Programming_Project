@@ -74,7 +74,7 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     \]
     \textit{Nota}: Il costo $c_{\text{passo}} = -1$ incentiva il robot a trovare il cammino di lunghezza minima verso $G$.
 
-    \item \textbf{Fattore di sconto}: $\gamma = 0{,}95 \in [0, 1)$, riflette la preferenza per l'ottimizzazione del percorso.
+    \item \textbf{Fattore di sconto}: $\gamma = 1$, riflette il fatto che il robot ugualmente valuta i premi futuri rispetto a quelli immediati. In combinazione con la struttura dei premi, garantisce che il cammino ottimo sia quello di lunghezza minima.
 \end{itemize}
 
 \clearpage
@@ -153,7 +153,7 @@ L'algoritmo \texttt{GRID-VALUE-ITERATION} riceve in ingresso la griglia, la cell
     \item $Grid[1..N, 1..N]$: matrice $N \times N$ rappresentante l'ambiente ($Grid[r,c] = \text{LIBERA}$ oppure $\text{OSTACOLO}$);
     \item $N$: dimensione del lato della griglia quadrata;
     \item $G = (r_G, c_G)$: coordinate della cella obiettivo (\textit{Goal});
-    \item $\gamma$: fattore di sconto ($0 \le \gamma < 1$);
+    \item $\gamma$: fattore di sconto;
     \item $\epsilon$: soglia di tolleranza per il criterio di convergenza ($\epsilon > 0$).
 \end{itemize}
 
@@ -173,22 +173,22 @@ L'algoritmo \texttt{GRID-VALUE-ITERATION} riceve in ingresso la griglia, la cell
     \item $\Delta \gets \infty$
     \item \textbf{while} $\Delta \ge \epsilon$
     \item \quad \textbf{do} $\Delta \gets 0$
+    \item \quad\quad $V_{old} \gets V$
     \item \quad\quad \textbf{for} $r \gets 1$ \textbf{to} $N$
     \item \quad\quad\quad \textbf{do for} $c \gets 1$ \textbf{to} $N$
     \item \quad\quad\quad\quad \textbf{do} $s \gets (r, c)$
     \item \quad\quad\quad\quad\quad \textbf{if} $Grid[r, c] \ne \text{OSTACOLO}$ \textbf{and} $s \ne G$
-    \item \quad\quad\quad\quad\quad\quad \textbf{then} $v_{old} \gets V[r, c]$
-    \item \quad\quad\quad\quad\quad\quad\quad $max\_q \gets -\infty$
+    \item \quad\quad\quad\quad\quad\quad \textbf{then} $max\_q \gets -\infty$
     \item \quad\quad\quad\quad\quad\quad\quad $best\_a \gets \text{NIL}$
     \item \quad\quad\quad\quad\quad\quad\quad \textbf{for each} $a \in \{\text{NORD}, \text{SUD}, \text{EST}, \text{OVEST}\}$
     \item \quad\quad\quad\quad\quad\quad\quad\quad \textbf{do} $s' \gets \delta(s, a)$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad $q \gets R(s, a) + \gamma \cdot V[r[s'], c[s']]$
+    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad $q \gets R(s, a) + \gamma \cdot V_{old}[r[s'], c[s']]$
     \item \quad\quad\quad\quad\quad\quad\quad\quad\quad \textbf{if} $q > max\_q$
     \item \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \textbf{then} $max\_q \gets q$
     \item \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad $best\_a \gets a$
     \item \quad\quad\quad\quad\quad\quad\quad $V[r, c] \gets max\_q$
     \item \quad\quad\quad\quad\quad\quad\quad $\pi[r, c] \gets best\_a$
-    \item \quad\quad\quad\quad\quad\quad\quad $\Delta \gets \max(\Delta, |v_{old} - V[r, c]|)$
+    \item \quad\quad\quad\quad\quad\quad\quad $\Delta \gets \max(\Delta, |V_{old}[r, c] - V[r, c]|)$
     \item \textbf{return} $(V, \pi)$
 \end{enumerate}
 
