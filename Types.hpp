@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 enum class CellType : int { 
@@ -31,7 +30,7 @@ struct Position {
     }
 };
 
-constexpr std::string_view actionToString(Action a) noexcept {
+inline constexpr const char* actionToString(Action a) noexcept {
     switch (a) {
         case Action::NORD:  return "^";
         case Action::SUD:   return "v";
