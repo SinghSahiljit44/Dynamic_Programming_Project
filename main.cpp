@@ -9,8 +9,15 @@
 #include "GridMDP.hpp"
 #include "MemoryTracker.hpp"
 
-// Larghezza comune a tutte le righe della tabella di benchmark
-constexpr int TABLE_WIDTH = 74;
+// Larghezza delle colonne della tabella di benchmark. La somma determina la lunghezza
+// delle righe di separazione, che restano così allineate alle colonne anche se una di
+// queste viene modificata.
+constexpr int COL_N           = 8;
+constexpr int COL_VARIANTE    = 14;
+constexpr int COL_ITERAZIONI  = 14;
+constexpr int COL_TEMPO       = 18;
+constexpr int COL_MEMORIA     = 20;
+constexpr int TABLE_WIDTH = COL_N + COL_VARIANTE + COL_ITERAZIONI + COL_TEMPO + COL_MEMORIA;
 
 // Struttura per memorizzare le metriche di benchmark
 struct BenchmarkResult {
@@ -93,25 +100,28 @@ bool loadGridFromFile(const std::string& filename, int& N, Position& S, Position
 }
 
 void printHeader(std::ostream& os) {
+    const std::string titolo = "BENCHMARK SPERIMENTALE: COMPITO 3";
+    const int padding = (TABLE_WIDTH - static_cast<int>(titolo.size())) / 2;
+
     os << std::string(TABLE_WIDTH, '=') << "\n";
-    os << "                 BENCHMARK SPERIMENTALE: COMPITO 3\n";
+    os << std::string(padding > 0 ? padding : 0, ' ') << titolo << "\n";
     os << std::string(TABLE_WIDTH, '=') << "\n";
     os << std::left
-       << std::setw(8)  << "N"
-       << std::setw(14) << "Variante"
-       << std::setw(14) << "Iterazioni"
-       << std::setw(18) << "Tempo (ms)"
-       << std::setw(20) << "Memoria Extra (KB)" << "\n";
+       << std::setw(COL_N)          << "N"
+       << std::setw(COL_VARIANTE)   << "Variante"
+       << std::setw(COL_ITERAZIONI) << "Iterazioni"
+       << std::setw(COL_TEMPO)      << "Tempo (ms)"
+       << std::setw(COL_MEMORIA)    << "Memoria Extra (KB)" << "\n";
     os << std::string(TABLE_WIDTH, '-') << "\n";
 }
 
 void printRow(std::ostream& os, int N, const std::string& variant, const BenchmarkResult& res) {
     os << std::left
-       << std::setw(8)  << N
-       << std::setw(14) << variant
-       << std::setw(14) << res.iterations
-       << std::setw(18) << std::fixed << std::setprecision(3) << res.time_ms
-       << std::setw(20) << std::fixed << std::setprecision(2) << res.memory_extra_kb << "\n";
+       << std::setw(COL_N)          << N
+       << std::setw(COL_VARIANTE)   << variant
+       << std::setw(COL_ITERAZIONI) << res.iterations
+       << std::setw(COL_TEMPO)      << std::fixed << std::setprecision(3) << res.time_ms
+       << std::setw(COL_MEMORIA)    << std::fixed << std::setprecision(2) << res.memory_extra_kb << "\n";
 }
 
 // Funzione di utilità per salvare la soluzione completa di una griglia su un file dedicato
