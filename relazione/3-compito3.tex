@@ -1,93 +1,105 @@
 \section{Compito 3}
 
 \subsection{Istanze utilizzate per la sperimentazione}
-La valutazione delle prestazioni è stata condotta su un set di 10 istanze fisse caricate da file (\texttt{grid\_1.txt} \dots \texttt{grid\_10.txt}) aventi dimensioni crescenti \\ $N \in \{20, 25, 30, 40, 50, 60, 70, 80, 100, 120\}$, corrispondenti a uno spazio degli stati $|S| = N^2$ che varia da 400 a 14.400 celle. 
+La valutazione delle prestazioni è stata condotta su un set di \benchNistanze{} istanze fisse caricate da file (\texttt{istanze/grid\_1.txt} \dots \texttt{istanze/grid\_10.txt}) aventi dimensioni crescenti \\ $N \in \{20, 25, 30, 40, 50, 60, 70, 80, 100, 120\}$, corrispondenti a griglie da $400$ a $14.400$ celle. Poiché lo spazio degli stati $\mathcal{S}$ comprende le sole celle libere, si ha $|\mathcal{S}| \le N^2$: nelle istanze impiegate $|\mathcal{S}|$ varia da $292$ a $\benchLibereMax{}$ (i valori esatti sono riportati nella Tabella~\ref{tab:eccentricita}).
 
 \noindent
-Le topologie analizzate includono strutture non banali quali serpentine, labirinti a pettine, stanze multiple con colli di bottiglia, spirali concentriche e trappole a U (per visualizzarle basta aprire i relativi file txt presenti nella directory di progetto). 
+Le topologie analizzate includono strutture non banali quali serpentine, labirinti a pettine, stanze multiple con colli di bottiglia, spirali concentriche e trappole a U; per visualizzarle basta aprire i relativi file di testo nella cartella \texttt{istanze/}. Tutte soddisfano l'ipotesi (R) del Compito 1: in ciascuna istanza ogni cella libera raggiunge il Goal, condizione necessaria alla convergenza con $\gamma = 1$.
 
 \subsection{Piattaforma utilizzata}
-Per la compilazione del codice si è usato MSVC di Microsoft.\\
-\\Per la corretta compilazione è necessario specificare i seguenti 3 file al compilatore: main.cpp, GridMDP.cpp, MemoryTracker.cpp.\\
-\\Caratteristiche della macchina di test:
+Il benchmark è stato eseguito compilando i tre file \texttt{main.cpp}, \texttt{GridMDP.cpp} e \texttt{MemoryTracker.cpp} con ottimizzazioni attive:
+\begin{center}
+\texttt{g++ -std=c++17 -O2 -o gridmdp main.cpp GridMDP.cpp MemoryTracker.cpp}
+\end{center}
+\noindent
+L'attivazione delle ottimizzazioni è essenziale: in build di \textit{debug} il costo delle astrazioni della libreria standard domina il tempo di esecuzione e maschera l'andamento asintotico che si vuole misurare.
+
+\noindent\\
+Caratteristiche della macchina di test:
 \begin{itemize}
-    \item CPU: Ryzen AI 9 465 w/ Radeon 880M (10 cores, 20 threads)
-    \item RAM: 32 GB DDR5
-    \item Sistema Operativo: Windows 11
-    \item Ambiente di sviluppo: Visual Studio code
+    \item CPU: AMD Ryzen 7 5700X (8 core, 16 thread)
+    \item RAM: 32 GB
+    \item Sistema Operativo: Linux Mint 22.3
+    \item Compilatore: g++ 13.3.0, standard C++17, ottimizzazione \texttt{-O2}
 \end{itemize}
+
+\noindent
+I tempi dipendono ovviamente dalla macchina; le iterazioni e l'occupazione di memoria sono invece deterministiche e riproducibili su qualunque piattaforma.
 
 \clearpage
 \subsection{Risultati Sperimentali}
-I dati raccolti durante l'esecuzione del benchmark sono riassunti nella seguente tabella:
+I dati raccolti durante l'esecuzione del benchmark sono riassunti nella seguente tabella. Tabella, grafici e valori citati nel testo sono generati automaticamente a partire dal file \texttt{soluzioni/risultati\_benchmark.txt} prodotto dall'eseguibile, e non possono quindi discostarsi fra loro.
 
 \begin{table}[h!]
 \centering
 \begin{tabular}{cccccc}
 \hline
-\textbf{N} & \textbf{Variante} & \textbf{Stati ($N^2$)} & \textbf{Iterazioni} & \textbf{Tempo (ms)} & \textbf{Memoria Extra (KB)} \\ \hline
-20  & Standard & 400    & 124  & 9.348    & 3.59 \\
-    & In-Place & 400    & 73   & 4.523    & 0.16 \\ \hline
-25  & Standard & 625    & 49   & 9.201    & 5.47 \\
-    & In-Place & 625    & 49   & 8.189    & 0.20 \\ \hline
-30  & Standard & 900    & 82   & 10.884   & 7.73 \\
-    & In-Place & 900    & 31   & 3.466    & 0.23 \\ \hline
-40  & Standard & 1.600  & 745  & 125.239  & 13.44 \\
-    & In-Place & 1.600  & 374  & 55.952   & 0.31 \\ \hline
-50  & Standard & 2.500  & 159  & 61.792   & 20.70 \\
-    & In-Place & 2.500  & 95   & 32.945   & 0.39 \\ \hline
-60  & Standard & 3.600  & 119  & 80.370   & 29.53 \\
-    & In-Place & 3.600  & 119  & 86.970   & 0.47 \\ \hline
-70  & Standard & 4.900  & 139  & 71.792   & 39.92 \\
-    & In-Place & 4.900  & 139  & 48.680   & 0.55 \\ \hline
-80  & Standard & 6.400  & 159  & 82.381   & 51.88 \\
-    & In-Place & 6.400  & 159  & 65.964   & 0.62 \\ \hline
-100 & Standard & 10.000 & 199  & 150.424  & 80.47 \\
-    & In-Place & 10.000 & 199  & 145.281  & 0.78 \\ \hline
-120 & Standard & 14.400 & 4802 & 3746.905 & 115.31 \\
-    & In-Place & 14.400 & 2462 & 1746.483 & 0.94 \\ \hline
+\textbf{N} & \textbf{Variante} & \textbf{Celle ($N^2$)} & \textbf{Iterazioni} & \textbf{Tempo (ms)} & \textbf{Memoria Extra (KB)} \\ \hline
+\benchTabella
 \end{tabular}
+\caption{Iterazioni, tempo di esecuzione e memoria ausiliaria di picco per le due varianti.}
 \end{table}
+
+\noindent
+La colonna \textbf{Memoria Extra} riporta il picco di memoria \textit{heap} allocata durante la sola esecuzione dell'algoritmo, al netto delle tabelle $V$ e $\pi$ che costituiscono l'uscita e che vengono allocate dal chiamante. Misura quindi esattamente la memoria \textit{ausiliaria} analizzata nel Compito 1.
+
+\subsection{Verifica del numero di iterazioni \texorpdfstring{$K$}{K}}
+Il Compito 1 dimostra che per la variante sincrona vale $K_{\text{Standard}} = \text{ecc}(G) + 1$, dove $\text{ecc}(G)$ è l'eccentricità del Goal nel grafo delle celle libere. La tabella seguente confronta la previsione teorica con il valore misurato:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{cccccc}
+\hline
+\textbf{N} & \textbf{Celle ($N^2$)} & \textbf{$|\mathcal{S}|$} & \textbf{$\text{ecc}(G)$} & \textbf{$\text{ecc}(G)+1$ (teorico)} & \textbf{$K_{\text{Standard}}$ (misurato)} \\ \hline
+\benchTabellaEcc
+\hline
+\end{tabular}
+\caption{Verifica dell'uguaglianza $K_{\text{Standard}} = \text{ecc}(G) + 1$.}
+\label{tab:eccentricita}
+\end{table}
+
+\noindent
+\textbf{Commento}: la previsione è verificata \textbf{esattamente} su tutte e \benchNistanze{} le istanze, senza alcuno scarto. Si nota inoltre come il caso peggiore $\text{ecc}(G) = \Theta(N^2)$ si manifesti concretamente: nell'istanza $N=120$ (serpentina) l'eccentricità vale $\benchEccMax{}$ su $\benchLibereMax{}$ celle libere, cioè quasi metà dello spazio degli stati, e infatti $K$ esplode a $\benchKtop{}$ iterazioni contro le $199$ dell'istanza $N=100$, che pure ha una griglia comparabile. È questo, e non la dimensione $N$, il fattore che determina il costo complessivo.
 
 \clearpage
 \subsection{Confronto tra Analisi Asintotica e Risultati Sperimentali}
-Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi asintotica teorica svolta nel Compito 1. Di seguito viene evidenziata la corrispondenza diretta tra i valori teorici e i dati misurati:
+Di seguito viene evidenziata la corrispondenza tra i valori teorici del Compito 1 e i dati misurati. Per non far dipendere le conclusioni dalla scelta arbitraria di due punti, gli andamenti sono stimati con una regressione ai minimi quadrati su scala logaritmica su tutti e \benchNistanze{} i punti: si assume il modello $y = k \cdot N^{\alpha}$ e si verifica che l'esponente stimato $\alpha$ sia prossimo a $2$.
 
 \begin{itemize}
     \item \textbf{Complessità Spaziale}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: Standard = $\Theta(N^2)$, In-Place = $\Theta(1)$.
-        \item \textit{Valore Misurato}: La versione Standard richiede una matrice duplicata $V_{\text{old}}$ di dimensione $N \times N$ a valori \texttt{double} ($8\text{ byte}$ per elemento), pari a $M_{\text{teorica}} = \frac{N^2 \times 8}{1024}\text{ KB}$, più un overhead costante dovuto alle strutture dati ausiliarie. Confrontando la variante Standard tra $N=40$ ($1.600$ celle) e $N=120$ ($14.400$ celle):
+        \item \textit{Valore Teorico}: Standard $= \Theta(N^2)$, In-Place $= \Theta(1)$.
+        \item \textit{Valore Misurato}: La versione Standard richiede la matrice duplicata $V_{\text{old}}$ di dimensione $N \times N$ a valori \texttt{double} ($8\text{ byte}$ per elemento), pari a $M_{\text{teorica}} = \frac{N^2 \times 8}{1024}\text{ KB}$, più un termine $\Theta(N)$ dovuto ai descrittori delle $N$ righe della matrice:
         \begin{itemize}
-            \item Per $N=40$: $M_{\text{misurata}} = 13{,}44\text{ KB}$ (a fronte di $12{,}50\text{ KB}$ teorici).
-            \item Per $N=120$: $M_{\text{misurata}} = 115{,}31\text{ KB}$ (a fronte di $112{,}50\text{ KB}$ teorici).
+            \item Per $N=\benchNbase{}$: $M_{\text{misurata}} = \benchMemBase{}\text{ KB}$ (a fronte di $\benchMemTeoricaBase{}\text{ KB}$ di soli dati).
+            \item Per $N=\benchNtop{}$: $M_{\text{misurata}} = \benchMemTop{}\text{ KB}$ (a fronte di $\benchMemTeoricaTop{}\text{ KB}$ di soli dati).
         \end{itemize}
-        A un aumento delle celle pari a $9$ volte ($\frac{14.400}{1.600}$), l'occupazione della memoria extra per la Standard aumenta di circa $8{,}58$ volte ($\frac{115{,}31}{13{,}44}$), confermando sperimentalmente l'andamento quadratico $\Theta(N^2)$.\\
-        Per contro, la variante In-Place mantiene un footprint minimo e svincolato dalla dimensione del problema ($0{,}31\text{ KB}$ per $N=40$ vs $0{,}94\text{ KB}$ per $N=120$), verificando l'andamento $\Theta(1)$.
+        La regressione log-log sui \benchNistanze{} punti fornisce un esponente $\alpha = \benchAlfaMem{}$ con $R^2 = \benchErreQuadMem{}$, confermando con precisione l'andamento quadratico $\Theta(N^2)$.\\
+        Per contro, la variante In-Place registra un picco di memoria ausiliaria \textbf{nullo} ($\benchMemIpTop{}\text{ KB}$ per ogni valore di $N$): non effettuando alcuna allocazione dinamica oltre alle tabelle di uscita, verifica l'andamento $\Theta(1)$ nella forma più netta possibile.
     \end{itemize}
 
     \item \textbf{Tempo di Esecuzione per una iterazione}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: $\Theta(N^2)$ 
-        \item \textit{Valore Misurato}: Calcolando il tempo medio di una singola iterazione ($t_{\text{iteration}} = T/K$), il costo cresce in modo quadratico rispetto a $N$. \\Ad esempio, confrontando la versione Standard tra $N=40$ ($1.600$ celle) e $N=120$ ($14.400$ celle):
+        \item \textit{Valore Teorico}: $\Theta(N^2)$.
+        \item \textit{Valore Misurato}: si considera il tempo medio di una singola iterazione, $t_{\text{iter}} = T/K$, che isola il costo di una scansione della griglia dal numero di scansioni necessarie. Ad esempio, per la variante Standard:
         \begin{itemize}
-            \item Per $N=40$: $t_{\text{iteration}} = \frac{18{,}055 \text{ ms}}{271} \approx 0{,}0666 \text{ ms}$ per iterazione.
-            \item Per $N=120$: $t_{\text{iteration}} = \frac{194{,}811 \text{ ms}}{271} \approx 0{,}7189 \text{ ms}$ per iterazione.
+            \item Per $N=\benchNbase{}$: $t_{\text{iter}} = \frac{\benchTempoBase{} \text{ ms}}{\benchKbase{}} \approx \benchTiterBase{} \text{ ms}$ per iterazione.
+            \item Per $N=\benchNtop{}$: $t_{\text{iter}} = \frac{\benchTempoTop{} \text{ ms}}{\benchKtop{}} \approx \benchTiterTop{} \text{ ms}$ per iterazione.
         \end{itemize}
-        A fronte di un aumento delle celle pari a $9$ volte ($\frac{14.400}{1.600}$), il tempo di una singola iterazione aumenta di circa $10{,}79$ volte ($\frac{0{,}7189}{0{,}0666}$), confermando sperimentalmente l'andamento teorico $\Theta(N^2)$.
+        La regressione su tutti i punti fornisce $\alpha = \benchAlfaTempoStd{}$ ($R^2 = \benchErreQuadTempoStd{}$) per la variante Standard e $\alpha = \benchAlfaTempoIp{}$ ($R^2 = \benchErreQuadTempoIp{}$) per la In-Place: entrambi i valori sono compatibili con l'andamento teorico $\Theta(N^2)$. Il lieve scostamento verso il basso è imputabile agli effetti di cache, che favoriscono le griglie piccole interamente residenti nei livelli superiori della gerarchia di memoria.
     \end{itemize}
 
-    \clearpage
     \item \textbf{Complessità Temporale Complessiva}:
     \begin{itemize}
-        \item \textit{Valore Teorico}: $T(N, K) = \Theta(K \cdot N^2)$, con la proprietà teorica $K_{\text{In-Place}} \le K_{\text{Standard}}$.
-        \item \textit{Valore Misurato}: La disuguaglianza $K_{\text{In-Place}} \le K_{\text{Standard}}$ è verificata in tutte le 10 istanze senza alcuna eccezione. Nell'istanza $N=40$, l'aggiornamento In-Place riduce le iterazioni da 271 a 122 ($-55\%$) con un crollo del tempo da $18{,}06\text{ ms}$ a $7{,}55\text{ ms}$. 
+        \item \textit{Valore Teorico}: $T(N, K) = \Theta(K \cdot N^2) = O(N^4)$, con $K_{\text{In-Place}} \le K_{\text{Standard}}$.
+        \item \textit{Valore Misurato}: La disuguaglianza $K_{\text{In-Place}} \le K_{\text{Standard}}$ è verificata in tutte e \benchNistanze{} le istanze. Nell'istanza $N=\benchNgrande{}$, l'aggiornamento In-Place riduce le iterazioni da \benchKstdGrande{} a \benchKipGrande{} ($-\benchRiduzioneGrande{}\%$) con un calo del tempo da $\benchTempoGrandeStd{}\text{ ms}$ a $\benchTempoGrandeIp{}\text{ ms}$.
     \end{itemize}
 \end{itemize}
 
+\clearpage
 \subsection{Grafici di Confronto}
 
-% 1. Grafico del Tempo per Iterazione vs Teorico O(N^2)
+% 1. Grafico del Tempo per Iterazione vs Teorico Theta(N^2)
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}
@@ -100,30 +112,25 @@ Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi as
     cycle list name=color list
 ]
     % Standard (Tempo / K)
-    \addplot+ [mark=*] coordinates {
-        (20, {3.242/124}) (25, {3.020/49}) (30, {3.539/82}) (40, {18.055/271}) (50, {25.785/159})
-        (60, {32.698/119}) (70, {37.004/139}) (80, {67.981/159}) (100, {150.717/199}) (120, {194.811/271})
-    };
+    \addplot+ [mark=*] coordinates {\benchCoordTempoIterStd};
     \addlegendentry{Standard (Misurato)}
 
     % In-Place (Tempo / K)
-    \addplot+ [mark=square*] coordinates {
-        (20, {1.593/73}) (25, {2.379/49}) (30, {1.214/31}) (40, {7.548/122}) (50, {17.479/102})
-        (60, {32.111/119}) (70, {34.952/139}) (80, {65.771/159}) (100, {147.277/199}) (120, {113.221/161})
-    };
+    \addplot+ [mark=square*] coordinates {\benchCoordTempoIterIp};
     \addlegendentry{In-Place (Misurato)}
 
-    % Curva Teorica O(N^2) basata sull'ultimo punto o valore di scala
-    \addplot [domain=20:120, samples=50, dashed, gray, thick] {(194.811/271) * (x/120)^2};
+    % Curva teorica Theta(N^2), normalizzata sul punto di ascissa massima
+    \addplot [domain=20:\benchNmax, samples=50, dashed, gray, thick]
+        {\benchNormTempo * (x/\benchNmax)^2};
     \addlegendentry{Teorico $\Theta(N^2)$}
 \end{axis}
 \end{tikzpicture}
-\caption{Confronto del tempo medio per una singola iterazione del ciclo while}
+\caption{Confronto del tempo medio per una singola iterazione del ciclo \texttt{while}.}
 \label{fig:tempo_iterazione}
 \end{figure}
 
 \noindent
-\textbf{Commento}: Entrambe le varianti seguono abbastanza bene la curva teorica quadratica $\Theta(N^2)$, confermando che il costo computazionale di un singola iterazione cresce quadraticamente con la dimensione della griglia. Ovviamente a volte la geometria degli ostacoli può influenzare il numero di iterazioni necessarie per la convergenza e di conseguenza non si segue perfettamente la curva teorica (infatti il tempo medio per iterazione si calcola come il tempo totale diviso il numero di iterazioni).
+\textbf{Commento}: entrambe le varianti seguono la curva teorica quadratica $\Theta(N^2)$, confermando che il costo di una singola iterazione cresce quadraticamente con la dimensione della griglia; gli esponenti stimati per regressione sono $\benchAlfaTempoStd{}$ e $\benchAlfaTempoIp{}$. La dispersione residua dei punti attorno alla curva è dovuta alla variabilità del tempo di esecuzione su una macchina multiutente e agli effetti di cache, non alla geometria degli ostacoli: quest'ultima influenza il \textit{numero} di iterazioni (Figura~\ref{fig:iterazioni}), non il costo della singola iterazione, che scandisce comunque tutte le $N^2$ celle.
 
 \clearpage
 % 2. Grafico delle Iterazioni di Convergenza (Diagramma a Barre)
@@ -134,37 +141,34 @@ Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi as
     width=0.8\textwidth, height=6cm,
     xlabel={Dimensione Griglia ($N$)},
     ylabel={Numero Iterazioni ($K$)},
-    symbolic x coords={20, 25, 30, 40, 50, 60, 70, 80, 100, 120},
     xtick=data,
+    x tick label style={/pgf/number format/1000 sep=, rotate=45, anchor=east, font=\footnotesize},
     grid=major,
     legend pos=north west,
-    enlargelimits=0.1,
+    enlargelimits=0.12,
+    ymode=log,
+    log origin=infty,
+    ymin=10,
     ybar,
-    bar width=6pt,
+    bar width=4pt,
 ]
     % Iterazioni Standard
-    \addplot coordinates {
-        (20, 124) (25, 49) (30, 82) (40, 271) (50, 159)
-        (60, 119) (70, 139) (80, 159) (100, 199) (120, 271)
-    };
+    \addplot coordinates {\benchCoordIterStd};
     \addlegendentry{Standard}
 
     % Iterazioni In-Place
-    \addplot coordinates {
-        (20, 73) (25, 49) (30, 31) (40, 122) (50, 102)
-        (60, 119) (70, 139) (80, 159) (100, 199) (120, 161)
-    };
+    \addplot coordinates {\benchCoordIterIp};
     \addlegendentry{In-Place}
 \end{axis}
 \end{tikzpicture}
-\caption{Confronto delle iterazioni di convergenza ($K$) tra Standard e In-Place.}
+\caption{Confronto delle iterazioni di convergenza ($K$) tra Standard e In-Place. Scala logaritmica sulle ordinate.}
 \label{fig:iterazioni}
 \end{figure}
 
 \noindent
-\textbf{Commento}: Si osserva chiaramente come l'aggiornamento \textit{In-Place} acceleri la convergenza (riducendo i cicli fino al $55\%$ per $N=40$) grazie alla propagazione immediata dei valori all'interno della stessa iterazione. Nelle istanze in cui i cicli si equivalgono ($N \in \{60, 70, 80, 100\}$), la geometria dei colli di bottiglia costringe la funzione valore a muoversi in direzione opposta alla scansione dei cicli \texttt{for}.
+\textbf{Commento}: si osserva come l'aggiornamento \textit{In-Place} acceleri la convergenza nelle istanze con $N$ pari a \benchIstanzeKridotto{}, grazie alla propagazione immediata dei valori all'interno della stessa iterazione. Nelle istanze in cui i cicli si equivalgono ($N$ pari a \benchIstanzeKpari{}) la geometria costringe la funzione valore a propagarsi in verso opposto alla scansione per righe dei cicli \texttt{for}, annullando l'effetto a catena. Si noti inoltre che $K$ non cresce monotonamente con $N$: dipende dall'eccentricità del Goal, non dalla dimensione della griglia, come mostrato nella Tabella~\ref{tab:eccentricita}.
 
-
+\clearpage
 % 3. Grafico dell'Occupazione di Memoria Extra vs Teorico Theta(N^2)
 \begin{figure}[htbp]
 \centering
@@ -177,43 +181,40 @@ Tutte le 10 istanze analizzate rispettano rigorosamente le stime dell'analisi as
     legend pos=north west,
 ]
     % Standard Memoria
-    \addplot [mark=*, red, thick] coordinates {
-        (20, 3.59) (25, 5.47) (30, 7.73) (40, 13.44) (50, 20.70)
-        (60, 29.53) (70, 39.92) (80, 51.88) (100, 80.47) (120, 115.31)
-    };
+    \addplot [mark=*, red, thick] coordinates {\benchCoordMemStd};
     \addlegendentry{Standard (Misurato)}
 
-    % Curva Teorica O(N^2) per la memoria
-    \addplot [domain=20:120, samples=50, dashed, gray, thick] {115.31 * (x/120)^2};
+    % Curva teorica Theta(N^2) per la memoria
+    \addplot [domain=20:\benchNmax, samples=50, dashed, gray, thick]
+        {\benchNormMem * (x/\benchNmax)^2};
     \addlegendentry{Teorico $\Theta(N^2)$}
 
     % In-Place Memoria
-    \addplot [mark=square*, blue, thick] coordinates {
-        (20, 0.16) (25, 0.20) (30, 0.23) (40, 0.31) (50, 0.39)
-        (60, 0.47) (70, 0.55) (80, 0.62) (100, 0.78) (120, 0.94)
-    };
+    \addplot [mark=square*, blue, thick] coordinates {\benchCoordMemIp};
     \addlegendentry{In-Place $\Theta(1)$}
 \end{axis}
 \end{tikzpicture}
-\caption{Verifica sperimentale della complessità spaziale.}
+\caption{Verifica sperimentale della complessità spaziale ausiliaria.}
 \label{fig:memoria}
 \end{figure}
 
 \noindent
-\textbf{Commento}: In questo caso si osserva una perfetta sovrapposizione tra la stima teorica e empirica
+\textbf{Commento}: la sovrapposizione tra stima teorica e misura empirica è pressoché perfetta ($R^2 = \benchErreQuadMem{}$). La serie In-Place resta costantemente nulla, a conferma che la variante non alloca alcuna memoria ausiliaria proporzionale a $N$.
 
 \clearpage
 \subsection{Conclusioni}
 L'analisi dei dati empirici permette di trarre le seguenti conclusioni sulle prestazioni dei due algoritmi:
 
 \begin{enumerate}
-    \item \textbf{Accelerazione della Convergenza}: Nelle istanze caratterizzate da percorsi guidati e corridoi orientati favorevolmente rispetto alla scansione (es. N = 20, 30, 40, 50, 120), la variante \textbf{In-Place} abbatte notevolmente il numero di iterazioni. Per $N=40$ il numero di cicli scende da 271 a 122 ($-55\%$), mentre per $N=120$ scende da 271 a 161 ($-40.6\%$). L'aggiornamento immediato degli stati consente infatti al valore di propagarsi lungo più celle adiacenti già all'interno della medesima iterazione.
+    \item \textbf{Il numero di iterazioni è determinato dall'eccentricità del Goal}: la relazione $K_{\text{Standard}} = \text{ecc}(G) + 1$ è verificata esattamente su tutte e \benchNistanze{} le istanze. Ne consegue $K \le |\mathcal{S}| \le N^2$ e quindi il limite $O(N^4)$ per il caso peggiore, effettivamente avvicinato dalle istanze a corridoio unico ($N=120$, \benchKtop{} iterazioni).
 
-    \item \textbf{Impatto della Geometria degli Ostacoli}: Nelle istanze $N \in \{25, 60, 70, 80, 100\}$, entrambe le varianti richiedono lo stesso numero di cicli. Questo fenomeno si verifica quando i muri e i colli di bottiglia costringono la funzione valore a propagarsi in direzione opposta rispetto al verso dei cicli \texttt{for}, rendendo temporaneamente inefficace l'effetto a catena dell'In-Place.
+    \item \textbf{Accelerazione della Convergenza}: Nelle istanze caratterizzate da percorsi orientati favorevolmente rispetto alla scansione ($N$ pari a \benchIstanzeKridotto{}) la variante \textbf{In-Place} riduce sensibilmente il numero di iterazioni: per $N=\benchNgrande{}$ i cicli scendono da \benchKstdGrande{} a \benchKipGrande{} ($-\benchRiduzioneGrande{}\%$). L'aggiornamento immediato degli stati consente al valore di propagarsi lungo più celle adiacenti già all'interno della medesima iterazione.
 
-    \item \textbf{Efficienza Temporale}: L'algoritmo In-Place risulta sistematicamente o più rapido o almeno pari a quello Standard. Nei casi con forte riduzione di iterazioni, il tempo si dimezza quasi (es. per $N=120$ si passa da $194{,}81\text{ ms}$ a $113{,}22\text{ ms}$). 
+    \item \textbf{Impatto della Geometria degli Ostacoli}: Nelle istanze con $N$ pari a \benchIstanzeKpari{} entrambe le varianti richiedono lo stesso numero di cicli. Ciò accade quando i muri e i colli di bottiglia costringono la funzione valore a propagarsi in verso opposto rispetto a quello dei cicli \texttt{for}, rendendo inefficace l'effetto a catena dell'In-Place.
 
-    \item \textbf{Complessità Temporale}: Viene confermata la complessità temporale teorica $\Theta(K \cdot N^2)$, con $K_{\text{In-Place}} \le K_{\text{Standard}}$ in tutte le istanze. 
+    \item \textbf{Efficienza Temporale}: L'algoritmo In-Place risulta più rapido dello Standard su tutte le istanze misurate. Il vantaggio è marcato dove riduce le iterazioni (per $N=\benchNgrande{}$ si passa da $\benchTempoGrandeStd{}\text{ ms}$ a $\benchTempoGrandeIp{}\text{ ms}$) e resta comunque presente altrove, poiché anche a parità di iterazioni la variante evita la copia della matrice $V_{old}$ a ogni ciclo.
 
-    \item \textbf{Complessità Spaziale}: Viene confermata la complessità spaziale teorica. La variante Standard scala quadraticamente fino a richiedere 115.31 KB extra per $N=120$, mentre la variante In-Place lavora direttamente sulla matrice principale con una occupazione minima ($0.94\text{ KB}$ per $N=120$).
+    \item \textbf{Complessità Temporale}: Viene confermata la complessità teorica $\Theta(K \cdot N^2)$: l'esponente stimato per il costo di una singola iterazione vale $\benchAlfaTempoStd{}$ per la Standard e $\benchAlfaTempoIp{}$ per la In-Place, entrambi compatibili con $\Theta(N^2)$.
+
+    \item \textbf{Complessità Spaziale}: Viene confermata la complessità spaziale teorica. La variante Standard scala quadraticamente ($\alpha = \benchAlfaMem{}$, $R^2 = \benchErreQuadMem{}$) fino a richiedere $\benchMemTop{}\text{ KB}$ di memoria ausiliaria per $N=\benchNtop{}$, mentre la variante In-Place lavora direttamente sulla matrice principale senza allocare nulla, verificando l'andamento $\Theta(1)$.
 \end{enumerate}

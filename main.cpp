@@ -4,11 +4,20 @@
 #include <chrono>
 #include <iomanip>
 #include <string>
-#include <functional>
 
 #include "Types.hpp"
 #include "GridMDP.hpp"
 #include "MemoryTracker.hpp"
+
+// Larghezza delle colonne della tabella di benchmark. La somma determina la lunghezza
+// delle righe di separazione, che restano così allineate alle colonne anche se una di
+// queste viene modificata.
+constexpr int COL_N           = 8;
+constexpr int COL_VARIANTE    = 14;
+constexpr int COL_ITERAZIONI  = 14;
+constexpr int COL_TEMPO       = 18;
+constexpr int COL_MEMORIA     = 20;
+constexpr int TABLE_WIDTH = COL_N + COL_VARIANTE + COL_ITERAZIONI + COL_TEMPO + COL_MEMORIA;
 
 // Struttura per memorizzare le metriche di benchmark
 struct BenchmarkResult {
@@ -36,43 +45,83 @@ BenchmarkResult measurePerformance(SolverFunc solver, ValueMatrix& V, PolicyMatr
 bool loadGridFromFile(const std::string& filename, int& N, Position& S, Position& G, Grid& grid) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "[ERRORE] Impossibile aprire il file di input: " << filename 
+        std::cerr << "[ERRORE] Impossibile aprire il file di input: " << filename
                   << "\nAssicurati che la cartella 'istanze' contenga tutti i file di input necessari.\n";
         return false;
     }
 
-    file >> N >> S.r >> S.c >> G.r >> G.c;
+    if (!(file >> N) || N <= 0) {
+        std::cerr << "[ERRORE] " << filename << ": dimensione N mancante o non valida.\n";
+        return false;
+    }
+
+    if (!(file >> S.r >> S.c >> G.r >> G.c)) {
+        std::cerr << "[ERRORE] " << filename << ": coordinate di Start/Goal mancanti o non valide.\n";
+        return false;
+    }
+
     grid.assign(N, std::vector<int>(N, 0));
 
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
-            file >> grid[r][c];
+            if (!(file >> grid[r][c])) {
+                std::cerr << "[ERRORE] " << filename << ": griglia incompleta, attese " << N * N
+                          << " celle.\n";
+                return false;
+            }
+            if (grid[r][c] != static_cast<int>(CellType::LIBERA) &&
+                grid[r][c] != static_cast<int>(CellType::OSTACOLO)) {
+                std::cerr << "[ERRORE] " << filename << ": valore di cella non valido in (" << r
+                          << "," << c << "): atteso 0 (LIBERA) o 1 (OSTACOLO).\n";
+                return false;
+            }
         }
+    }
+
+    auto inBounds = [N](Position p) { return p.r >= 0 && p.r < N && p.c >= 0 && p.c < N; };
+
+    if (!inBounds(S) || !inBounds(G)) {
+        std::cerr << "[ERRORE] " << filename << ": Start (" << S.r << "," << S.c << ") o Goal ("
+                  << G.r << "," << G.c << ") fuori dalla griglia " << N << "x" << N << ".\n";
+        return false;
+    }
+
+    if (grid[S.r][S.c] == static_cast<int>(CellType::OSTACOLO)) {
+        std::cerr << "[ERRORE] " << filename << ": la cella di Start e' un ostacolo.\n";
+        return false;
+    }
+
+    if (grid[G.r][G.c] == static_cast<int>(CellType::OSTACOLO)) {
+        std::cerr << "[ERRORE] " << filename << ": la cella di Goal e' un ostacolo.\n";
+        return false;
     }
 
     return true;
 }
 
 void printHeader(std::ostream& os) {
-    os << "========================================================================================\n";
-    os << "                        BENCHMARK SPERIMENTALE: COMPITO 3                               \n";
-    os << "========================================================================================\n";
-    os << std::left 
-       << std::setw(8)  << "N"
-       << std::setw(14) << "Variante"
-       << std::setw(14) << "Iterazioni"
-       << std::setw(18) << "Tempo (ms)"
-       << std::setw(20) << "Memoria Extra (KB)" << "\n";
-    os << std::string(74, '-') << "\n";
+    const std::string titolo = "BENCHMARK SPERIMENTALE: COMPITO 3";
+    const int padding = (TABLE_WIDTH - static_cast<int>(titolo.size())) / 2;
+
+    os << std::string(TABLE_WIDTH, '=') << "\n";
+    os << std::string(padding > 0 ? padding : 0, ' ') << titolo << "\n";
+    os << std::string(TABLE_WIDTH, '=') << "\n";
+    os << std::left
+       << std::setw(COL_N)          << "N"
+       << std::setw(COL_VARIANTE)   << "Variante"
+       << std::setw(COL_ITERAZIONI) << "Iterazioni"
+       << std::setw(COL_TEMPO)      << "Tempo (ms)"
+       << std::setw(COL_MEMORIA)    << "Memoria Extra (KB)" << "\n";
+    os << std::string(TABLE_WIDTH, '-') << "\n";
 }
 
 void printRow(std::ostream& os, int N, const std::string& variant, const BenchmarkResult& res) {
-    os << std::left 
-       << std::setw(8)  << N
-       << std::setw(14) << variant
-       << std::setw(14) << res.iterations
-       << std::setw(18) << std::fixed << std::setprecision(3) << res.time_ms
-       << std::setw(20) << std::fixed << std::setprecision(2) << res.memory_extra_kb << "\n";
+    os << std::left
+       << std::setw(COL_N)          << N
+       << std::setw(COL_VARIANTE)   << variant
+       << std::setw(COL_ITERAZIONI) << res.iterations
+       << std::setw(COL_TEMPO)      << std::fixed << std::setprecision(3) << res.time_ms
+       << std::setw(COL_MEMORIA)    << std::fixed << std::setprecision(2) << res.memory_extra_kb << "\n";
 }
 
 // Funzione di utilità per salvare la soluzione completa di una griglia su un file dedicato
@@ -83,7 +132,7 @@ void saveSolutionToFile(
     const Grid& grid,
     const ValueMatrix& V,
     const PolicyMatrix& pi,
-    const std::vector<Position>& path) 
+    const std::vector<Position>& path)
 {
     std::ofstream os(filename);
     if (!os.is_open()) {
@@ -91,27 +140,41 @@ void saveSolutionToFile(
         return;
     }
 
+    auto isObstacle = [&](int r, int c) {
+        return grid[r][c] == static_cast<int>(CellType::OSTACOLO);
+    };
+
     os << "========================================================================================\n";
     os << "   RISOLUZIONE MDP E CAMMINATA OTTIMA (" << variant_name << "): " << filename << "\n";
-    os << "   Dimensioni Griglia: " << N << "x" << N << " | Start: (" << S.r << "," << S.c 
+    os << "   Dimensioni Griglia: " << N << "x" << N << " | Start: (" << S.r << "," << S.c
        << ") | Goal: (" << G.r << "," << G.c << ")\n";
     os << "========================================================================================\n\n";
 
-    // 1. Matrice dei Valori V*
-    os << "--- MATRICE DEI VALORI V* ---\n";
+    // 1. Matrice dei Valori V* ('#' marca le celle ostacolo, prive di valore)
+    os << "--- MATRICE DEI VALORI V* ('#'=Ostacolo) ---\n";
     os << std::fixed << std::setprecision(2);
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
-            os << std::setw(8) << V[r][c] << " ";
+            if (isObstacle(r, c)) {
+                os << std::setw(8) << "#" << " ";
+            } else {
+                os << std::setw(8) << V[r][c] << " ";
+            }
         }
         os << "\n";
     }
 
-    // 2. Politica Ottima pi*
-    os << "\n--- POLITICA OTTIMA pi* ---\n";
+    // 2. Politica Ottima pi* ('#'=Ostacolo, 'G'=stato terminale, privo di azione)
+    os << "\n--- POLITICA OTTIMA pi* ('#'=Ostacolo, 'G'=Goal) ---\n";
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
-            os << "  " << actionToString(pi[r][c]) << "  ";
+            if (isObstacle(r, c)) {
+                os << "  #  ";
+            } else if (Position{r, c} == G) {
+                os << "  G  ";
+            } else {
+                os << "  " << actionToString(pi[r][c]) << "  ";
+            }
         }
         os << "\n";
     }
@@ -122,7 +185,7 @@ void saveSolutionToFile(
 
     for (int r = 0; r < N; ++r) {
         for (int c = 0; c < N; ++c) {
-            if (grid[r][c] == static_cast<int>(CellType::OSTACOLO)) display[r][c] = '#';
+            if (isObstacle(r, c)) display[r][c] = '#';
         }
     }
 
@@ -140,8 +203,11 @@ void saveSolutionToFile(
         os << "\n";
     }
 
-    // 4. Lista dettagliata delle coordinate con N = dimensione
-    os << "\n--- SEQUENZA COORDINATE DEL PERCORSO (N = " << N << ") ---\n";
+    // 4. Lista dettagliata delle coordinate del cammino
+    const std::size_t cells = path.size();
+    const std::size_t moves = (cells > 0) ? cells - 1 : 0;
+    os << "\n--- SEQUENZA COORDINATE DEL PERCORSO (" << moves << " passi, " << cells
+       << " celle) ---\n";
     for (size_t i = 0; i < path.size(); ++i) {
         os << "(" << path[i].r << "," << path[i].c << ")" << (i + 1 == path.size() ? "" : " -> ");
         if ((i + 1) % 10 == 0) os << "\n";
@@ -163,7 +229,7 @@ int main() {
     std::ofstream outFile(output_benchmark);
 
     if (!outFile.is_open()) {
-        std::cerr << "[ERRORE] Impossibile creare il file di output: " << output_benchmark 
+        std::cerr << "[ERRORE] Impossibile creare il file di output: " << output_benchmark
                   << "\nAssicurati che la cartella 'soluzioni' esista nella directory di progetto.\n";
         return 1;
     }
@@ -203,28 +269,28 @@ int main() {
         // Scrittura dei risultati nel file di benchmark
         printRow(outFile, N, "Standard", res_std);
         printRow(outFile, N, "In-Place", res_ip);
-        outFile << std::string(74, '-') << "\n";
+        outFile << std::string(TABLE_WIDTH, '-') << "\n";
 
         // 1. Costruzione percorso e verifica - STANDARD
         std::vector<Position> path_std = constructOptimalPath(S, G, pi_std, grid, N);
-        bool goal_std = (!path_std.empty() && path_std.back().r == G.r && path_std.back().c == G.c);
+        bool goal_std = (!path_std.empty() && path_std.back() == G);
 
         // 2. Costruzione percorso e verifica - IN-PLACE
         std::vector<Position> path_ip = constructOptimalPath(S, G, pi_ip, grid, N);
-        bool goal_ip = (!path_ip.empty() && path_ip.back().r == G.r && path_ip.back().c == G.c);
+        bool goal_ip = (!path_ip.empty() && path_ip.back() == G);
 
         std::string base_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
 
         // Stampa dettagliata a console dello stato per entrambe le varianti
         std::cout << "Istanza " << base_filename << " (N = " << N << "):\n";
         if (goal_std) {
-            std::cout << "  - Standard : [OK] Goal RAGGIUNTO in " << path_std.size() << " passi.\n";
+            std::cout << "  - Standard : [OK] Goal RAGGIUNTO in " << path_std.size() - 1 << " passi.\n";
         } else {
             std::cout << "  - Standard : [AVVISO] Goal NON RAGGIUNTO!\n";
         }
 
         if (goal_ip) {
-            std::cout << "  - In-Place : [OK] Goal RAGGIUNTO in " << path_ip.size() << " passi.\n";
+            std::cout << "  - In-Place : [OK] Goal RAGGIUNTO in " << path_ip.size() - 1 << " passi.\n";
         } else {
             std::cout << "  - In-Place : [AVVISO] Goal NON RAGGIUNTO!\n";
         }
