@@ -1,0 +1,109 @@
+% ============================================================================
+% FILE GENERATO AUTOMATICAMENTE - NON MODIFICARE A MANO
+% Sorgente : soluzioni/risultati_benchmark.txt
+% Rigenera : python3 tools/genera_dati_relazione.py
+% ============================================================================
+
+\newcommand{\benchTabella}{%
+    20 & Standard & 400 & 124 & 0{,}444 & 3{,}59 \\
+     & In-Place & 400 & 73 & 0{,}146 & 0{,}00 \\ \hline
+    25 & Standard & 625 & 49 & 0{,}265 & 5{,}47 \\
+     & In-Place & 625 & 49 & 0{,}226 & 0{,}00 \\ \hline
+    30 & Standard & 900 & 82 & 0{,}456 & 7{,}73 \\
+     & In-Place & 900 & 31 & 0{,}132 & 0{,}00 \\ \hline
+    40 & Standard & 1.600 & 745 & 6{,}291 & 13{,}44 \\
+     & In-Place & 1.600 & 374 & 2{,}387 & 0{,}00 \\ \hline
+    50 & Standard & 2.500 & 159 & 3{,}002 & 20{,}70 \\
+     & In-Place & 2.500 & 95 & 1{,}389 & 0{,}00 \\ \hline
+    60 & Standard & 3.600 & 119 & 3{,}859 & 29{,}53 \\
+     & In-Place & 3.600 & 119 & 2{,}790 & 0{,}00 \\ \hline
+    70 & Standard & 4.900 & 139 & 4{,}182 & 39{,}92 \\
+     & In-Place & 4.900 & 139 & 3{,}401 & 0{,}00 \\ \hline
+    80 & Standard & 6.400 & 159 & 7{,}386 & 51{,}88 \\
+     & In-Place & 6.400 & 159 & 6{,}026 & 0{,}00 \\ \hline
+    100 & Standard & 10.000 & 199 & 16{,}099 & 80{,}47 \\
+     & In-Place & 10.000 & 199 & 13{,}165 & 0{,}00 \\ \hline
+    120 & Standard & 14.400 & 4802 & 390{,}516 & 115{,}31 \\
+     & In-Place & 14.400 & 2462 & 158{,}769 & 0{,}00 \\ \hline
+}
+
+\newcommand{\benchCoordTempoIterStd}{(20, 0.003581) (25, 0.005408) (30, 0.005561) (40, 0.008444) (50, 0.018881) (60, 0.032429) (70, 0.030086) (80, 0.046453) (100, 0.080899) (120, 0.081324)}
+\newcommand{\benchCoordTempoIterIp}{(20, 0.002000) (25, 0.004612) (30, 0.004258) (40, 0.006382) (50, 0.014621) (60, 0.023445) (70, 0.024468) (80, 0.037899) (100, 0.066156) (120, 0.064488)}
+\newcommand{\benchCoordIterStd}{(20, 124) (25, 49) (30, 82) (40, 745) (50, 159) (60, 119) (70, 139) (80, 159) (100, 199) (120, 4802)}
+\newcommand{\benchCoordIterIp}{(20, 73) (25, 49) (30, 31) (40, 374) (50, 95) (60, 119) (70, 139) (80, 159) (100, 199) (120, 2462)}
+\newcommand{\benchCoordMemStd}{(20, 3.59) (25, 5.47) (30, 7.73) (40, 13.44) (50, 20.70) (60, 29.53) (70, 39.92) (80, 51.88) (100, 80.47) (120, 115.31)}
+\newcommand{\benchCoordMemIp}{(20, 0.00) (25, 0.00) (30, 0.00) (40, 0.00) (50, 0.00) (60, 0.00) (70, 0.00) (80, 0.00) (100, 0.00) (120, 0.00)}
+\newcommand{\benchAsseX}{20, 25, 30, 40, 50, 60, 70, 80, 100, 120}
+
+\newcommand{\benchNormTempo}{0.08132362}
+\newcommand{\benchNormMem}{115.31}
+\newcommand{\benchNmax}{120}
+
+% Coppia di riferimento per le verifiche asintotiche
+\newcommand{\benchNbase}{20}
+\newcommand{\benchNtop}{120}
+\newcommand{\benchCelleBase}{400}
+\newcommand{\benchCelleTop}{14.400}
+\newcommand{\benchRapportoCelle}{36}
+
+% Memoria (variante Standard)
+\newcommand{\benchMemBase}{3{,}59}
+\newcommand{\benchMemTop}{115{,}31}
+\newcommand{\benchMemTeoricaBase}{3{,}12}
+\newcommand{\benchMemTeoricaTop}{112{,}50}
+\newcommand{\benchMemRapporto}{32{,}12}
+\newcommand{\benchMemIpBase}{0{,}00}
+\newcommand{\benchMemIpTop}{0{,}00}
+
+% Tempo per iterazione (variante Standard)
+\newcommand{\benchTempoBase}{0{,}444}
+\newcommand{\benchTempoTop}{390{,}516}
+\newcommand{\benchKbase}{124}
+\newcommand{\benchKtop}{4802}
+\newcommand{\benchTiterBase}{0{,}0036}
+\newcommand{\benchTiterTop}{0{,}0813}
+\newcommand{\benchTiterRapporto}{22{,}71}
+
+% Esponenti stimati con regressione ai minimi quadrati su scala log-log
+\newcommand{\benchAlfaTempoStd}{1{,}90}
+\newcommand{\benchErreQuadTempoStd}{0{,}973}
+\newcommand{\benchAlfaTempoIp}{2{,}00}
+\newcommand{\benchErreQuadTempoIp}{0{,}974}
+\newcommand{\benchAlfaMem}{1{,}94}
+\newcommand{\benchErreQuadMem}{1{,}000}
+
+% Riduzione delle iterazioni grazie all'aggiornamento in-place
+\newcommand{\benchKstdBase}{124}
+\newcommand{\benchKipBase}{73}
+\newcommand{\benchRiduzioneBase}{41{,}1}
+\newcommand{\benchTipBase}{0{,}146}
+\newcommand{\benchNgrande}{120}
+\newcommand{\benchKstdGrande}{4802}
+\newcommand{\benchKipGrande}{2462}
+\newcommand{\benchRiduzioneGrande}{48{,}7}
+\newcommand{\benchTempoGrandeStd}{390{,}516}
+\newcommand{\benchTempoGrandeIp}{158{,}769}
+
+% Verifica sperimentale del limite K <= |S| (ecc(G) = eccentricita' del Goal)
+\newcommand{\benchTabellaEcc}{%
+    20 & 400 & 292 & 123 & 124 & 124 \\
+    25 & 625 & 580 & 48 & 49 & 49 \\
+    30 & 900 & 546 & 81 & 82 & 82 \\
+    40 & 1.600 & 916 & 744 & 745 & 745 \\
+    50 & 2.500 & 2.010 & 158 & 159 & 159 \\
+    60 & 3.600 & 3.376 & 118 & 119 & 119 \\
+    70 & 4.900 & 3.379 & 138 & 139 & 139 \\
+    80 & 6.400 & 5.347 & 158 & 159 & 159 \\
+    100 & 10.000 & 9.433 & 198 & 199 & 199 \\
+    120 & 14.400 & 9.798 & 4.801 & 4.802 & 4.802 \\
+}
+\newcommand{\benchEccEsatta}{si}
+\newcommand{\benchEccMax}{4.801}
+\newcommand{\benchLibereMax}{9.798}
+
+% Elenchi di istanze
+\newcommand{\benchIstanzeKpari}{25, 60, 70, 80 e 100}
+\newcommand{\benchIstanzeKridotto}{20, 30, 40, 50 e 120}
+\newcommand{\benchIstanzeIpLenta}{nessuna}
+\newcommand{\benchNistanze}{10}
+

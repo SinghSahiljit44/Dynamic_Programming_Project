@@ -1,4 +1,4 @@
-﻿# ==========================================
+# ==========================================
 # C++ / MSVC Binari e File di Compilazione
 # ==========================================
 *.exe
@@ -8,6 +8,10 @@
 *.idb
 *.vc.db
 build/
+
+# Eseguibili prodotti su Linux/macOS (senza estensione)
+gridmdp
+genera
 
 # ==========================================
 # File Ausiliari e Temporanei di LaTeX

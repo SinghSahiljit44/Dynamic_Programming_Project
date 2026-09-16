@@ -2,11 +2,16 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <filesystem>
+
+// Le istanze vengono scritte nella cartella letta da main.cpp
+const std::string OUTPUT_DIR = "istanze";
 
 void saveGridToFile(const std::string& filename, int N, std::pair<int,int> S, std::pair<int,int> G, const std::vector<std::vector<int>>& grid) {
-    std::ofstream outFile(filename);
+    const std::string path = OUTPUT_DIR + "/" + filename;
+    std::ofstream outFile(path);
     if (!outFile.is_open()) {
-        std::cerr << "Errore nella creazione di " << filename << "\n";
+        std::cerr << "Errore nella creazione di " << path << "\n";
         return;
     }
     outFile << N << "\n";
@@ -20,7 +25,7 @@ void saveGridToFile(const std::string& filename, int N, std::pair<int,int> S, st
         outFile << "\n";
     }
     outFile.close();
-    std::cout << "Generato: " << filename << " (N = " << N << ")\n";
+    std::cout << "Generato: " << path << " (N = " << N << ")\n";
 }
 
 // 1. Serpentina / Snake
@@ -67,7 +72,7 @@ void generateSpiral(int N, const std::string& filename) {
         int top = 2 * l, bottom = N - 1 - 2 * l;
         int left = 2 * l, right = N - 1 - 2 * l;
         
-        // CONDIFIX: Blocca la spirale prima che soffochi il Goal centrale
+        // Blocca la spirale prima che soffochi il Goal centrale
         if (top >= bottom - 1 || left >= right - 1) break;
 
         for (int c = left; c <= right; ++c) grid[top][c] = 1;
@@ -117,7 +122,7 @@ void generateRings(int N, const std::string& filename) {
 // 6. Pilastri Spessi
 void generatePillars(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
-    // CONDIFIX: limite r < N - 3 per non toccare il Goal a (N-1, N-1)
+    // Limite r < N - 3 per non toccare il Goal a (N-1, N-1)
     for (int r = 2; r < N - 3; r += 5) {
         for (int c = 2; c < N - 3; c += 5) {
             for (int dr = 0; dr < 3; ++dr) {
@@ -146,7 +151,8 @@ void generateUTraps(int N, const std::string& filename) {
 }
 
 int main() {
-    std::cout << "Avvio generazione istanze di grande dimensione...\n\n";
+    std::filesystem::create_directories(OUTPUT_DIR);
+    std::cout << "Avvio generazione istanze di grande dimensione in '" << OUTPUT_DIR << "/'...\n\n";
 
     generateSnake(20,  "grid_1.txt");
     generateRooms(25,  2, "grid_2.txt");
