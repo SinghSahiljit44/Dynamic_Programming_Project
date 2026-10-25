@@ -1,13 +1,18 @@
 \section{Compito 2}
 
-\subsection{Codifica dei due algritmi}
-L'implementazione dello pseudocodice è stata fatta in C++ nella segeuente maniera:
+\subsection{Codifica dei due algoritmi}
+L'implementazione dello pseudocodice è stata fatta in C++ nella seguente maniera:
 \begin{itemize}
-    \item \textbf{Types.hpp}: Definisce i tipi di dati utilizzati (es. CellType, Action, etc...)
-    \item \textbf{GridMDP.hpp}: Definizione delle firme dei metodi che verranno implementati in \textbf{GridMDP.cpp}
-    \item \textbf{GridMDP.cpp}: Implementazione dei metodi definiti in \textbf{GridMDP.hpp} (gridValueIteration e constructOptimalPath sono l'implementazione esatta dei due pseudocodici della scorsa sezione)
-    \item \textbf{main.cpp}: Contiene il main e la logica per leggere i file di input e stampare i risultati
+    \item \textbf{Types.hpp}: Definisce i tipi di dati utilizzati (\texttt{CellType}, \texttt{Action}, \texttt{Position} e gli alias \texttt{Grid}, \texttt{ValueMatrix}, \texttt{PolicyMatrix});
+    \item \textbf{GridMDP.hpp}: Definizione delle firme dei metodi che verranno implementati in \textbf{GridMDP.cpp};
+    \item \textbf{GridMDP.cpp}: Implementazione dei metodi definiti in \textbf{GridMDP.hpp}. Le funzioni \texttt{gridValueIteration} e \texttt{constructOptimalPath} sono l'implementazione esatta dei due pseudocodici della scorsa sezione, mentre \texttt{gridValueIterationInPlace} realizza la variante descritta qui di seguito;
+    \item \textbf{MemoryTracker.hpp} / \textbf{MemoryTracker.cpp}: Sostituiscono gli operatori globali \texttt{new} e \texttt{delete} per misurare il picco di memoria \textit{heap} ausiliaria allocata da ciascuna variante, dato impiegato nella sperimentazione del Compito 3;
+    \item \textbf{main.cpp}: Contiene il \texttt{main} e la logica per leggere i file di input, cronometrare le due varianti e salvare i risultati;
+    \item \textbf{GenerateInstance.cpp}: Programma separato, usato una tantum per produrre le 10 istanze della cartella \texttt{istanze/}. Non fa parte dell'eseguibile di risoluzione.
 \end{itemize}
+
+\noindent
+La compilazione dell'eseguibile di risoluzione richiede i tre file \texttt{main.cpp}, \texttt{GridMDP.cpp} e \texttt{MemoryTracker.cpp}.
 
 \subsection{Variante In-Place}
 A differenza della versione standard (\texttt{gridValueIteration}), che calcola i nuovi valori basandosi su una copia congelata della matrice dell'iterazione precedente (\texttt{V\_old}) secondo uno schema di aggiornamento sincrono, la variante in-place \\(\texttt{gridValueIterationInPlace}) aggiorna la funzione valore in modo asincrono:
@@ -21,14 +26,17 @@ A differenza della versione standard (\texttt{gridValueIteration}), che calcola 
 Di conseguenza, quando l'algoritmo valuta lo stato successivo $s'$ per calcolare $q = R + \gamma \cdot V(s')$, legge i dati direttamente dalla matrice $V$ in tempo reale. Se la cella adiacente $s'$ è già stata elaborata durante la scansione corrente, l'algoritmo utilizzerà il suo valore già aggiornato al ciclo attuale anziché quello dell'iterazione del ciclo \texttt{while} precedente.
 
 \subsection{Vantaggi della Variante In-Place}
-Nonostante entrambe le varianti garantiscano la convergenza alla medesima funzione valore ottimale $V^*$ e alla relativa politica $\pi^*$, l'approccio in-place offre rilevanti vantaggi pratici e computazionali:
+Entrambe le varianti convergono alla medesima funzione valore ottimale $V^*$, che è unica. La politica $\pi^*$ restituita può invece in linea di principio differire quando più azioni realizzano lo stesso valore massimo, poiché le due varianti visitano gli stati con valori intermedi diversi; nella sperimentazione del Compito 3 le due politiche sono comunque risultate identiche su tutte e 10 le istanze. Ciò premesso, l'approccio in-place offre due vantaggi:
 
 \begin{enumerate}
-    \item \textbf{Maggiore velocità di convergenza}: 
-    Nella variante standard sincrona, il valore di una cella (es. la ricompensa del Goal) può propagarsi verso i vicini al massimo di una cella per ogni iterazione del ciclo \texttt{while}. Con l'aggiornamento in-place, si innesca un effetto a catena: se l'ordine di scansione incontra una cella adiacente a una già aggiornata, recepisce immediatamente la novità. Questo permette all'informazione di propagarsi lungo più celle nella stessa iterazione, riducendo drasticamente il numero totale di cicli necessari a soddisfare la condizione di arresto $\Delta < \epsilon$.
-    Questo fenomeno sarà particolarmente evidente durante la sperimentazione dove spesso il valore di $K$ (numero di iterazioni) della variante In-Place risulta significativamente inferiore a quello della variante Standard.
+    \item \textbf{Maggiore velocità di convergenza}:
+    Nella variante standard sincrona, il valore di una cella (es. la ricompensa del Goal) può propagarsi verso i vicini al massimo di una cella per ogni iterazione del ciclo \texttt{while}; come mostrato nel Compito 1 ciò porta a $K_{\text{Standard}} = \text{ecc}(G) + 1$ iterazioni esatte. Con l'aggiornamento in-place, si innesca un effetto a catena: se l'ordine di scansione incontra una cella adiacente a una già aggiornata, recepisce immediatamente la novità. Questo permette all'informazione di propagarsi lungo più celle nella stessa iterazione, riducendo il numero totale di cicli necessari a soddisfare la condizione di arresto $\Delta < \epsilon$.
+    Il guadagno dipende però dall'orientamento dei cammini ottimi rispetto all'ordine di scansione per righe: se l'informazione deve propagarsi in verso opposto alla scansione, l'effetto a catena non si innesca e le due varianti compiono lo stesso numero di iterazioni. Si ha dunque $K_{\text{In-Place}} \le K_{\text{Standard}}$, con uguaglianza nel caso sfavorevole.
 
-    \item \textbf{Efficienza di memoria}: 
-    Eliminando la duplicazione continua dell'intera griglia ad ogni iterazione, la complessità spaziale ausiliaria si riduce da $\Theta(N^2)$ a $\Theta(1)$, richiedendo soltanto una variabile temporanea. Anche questo fenomeno si vedrà chiaramente nei risultati sperimentali.
+    \item \textbf{Efficienza di memoria}:
+    Eliminando la duplicazione continua dell'intera griglia ad ogni iterazione, la complessità spaziale \textit{ausiliaria} si riduce da $\Theta(N^2)$ a $\Theta(1)$, richiedendo soltanto la variabile temporanea $v_{old}$. Resta ovviamente invariata l'occupazione $\Theta(N^2)$ delle tabelle $V$ e $\pi$, che costituiscono l'uscita dell'algoritmo e non sono quindi memoria ausiliaria.
 
 \end{enumerate}
+
+\noindent
+Entrambi i fenomeni vengono misurati sperimentalmente nel Compito 3.

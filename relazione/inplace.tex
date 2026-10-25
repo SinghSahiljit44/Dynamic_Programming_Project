@@ -1,0 +1,33 @@
+\noindent
+La variante in-place riutilizza la procedura \texttt{BELLMAN-UPDATE} (Algoritmo~\ref{alg:bellman}), passandole direttamente la tabella $V$ in luogo della copia $V_{old}$: i valori delle celle adiacenti vengono così letti già aggiornati, se la scansione corrente le ha visitate. Al posto della copia dell'intera matrice viene salvato soltanto il valore scalare $v_{old}$ della cella in esame, necessario per il calcolo di $\Delta$.
+
+\begin{algorithm}[H]
+\caption{Calcolo del valore di una soluzione ottima (variante in-place)}
+\label{alg:gvi-inplace}
+\begin{algorithmic}[1]
+\Statex \textbf{GRID-VALUE-ITERATION-IN-PLACE}$(Grid, N, G, \gamma, \epsilon)$
+\For{$r \gets 0$ \textbf{to} $N-1$} \label{gvip:init-start}
+    \DoFor{$c \gets 0$ \textbf{to} $N-1$}
+        \State \Do $V[r, c] \gets 0$;\ \ $\pi[r, c] \gets \text{NIL}$
+    \EndDoFor
+\EndFor
+\State $\Delta \gets \infty$;\ \ $k \gets 0$;\ \ $max\_iter \gets N^2 + 1$ \label{gvip:init-end}
+\While{$\Delta \ge \epsilon$ \textbf{and} $k < max\_iter$} \label{gvip:while}
+    \State \Do $\Delta \gets 0$;\ \ $k \gets k + 1$
+    \For{$r \gets 0$ \textbf{to} $N-1$} \label{gvip:scan}
+        \DoFor{$c \gets 0$ \textbf{to} $N-1$}
+            \State \Do $s \gets (r, c)$
+            \If{$Grid[s] \ne \text{OSTACOLO}$ \textbf{and} $s \ne G$}
+                \State \Then $v_{old} \gets V[s]$ \label{gvip:vold}
+                \State $(V[s], \pi[s]) \gets \text{BELLMAN-UPDATE}(s, V, \gamma)$ \label{gvip:update}
+                \State $\Delta \gets \max(\Delta, |v_{old} - V[s]|)$ \label{gvip:while-end}
+            \EndIf
+        \EndDoFor
+    \EndFor
+\EndWhile
+\If{$\Delta \ge \epsilon$}
+    \State \Then \textbf{error} ``Nessuna convergenza: esistono celle libere da cui $G$ è irraggiungibile''
+\EndIf
+\State \Return $(V, \pi)$
+\end{algorithmic}
+\end{algorithm}

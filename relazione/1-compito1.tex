@@ -3,7 +3,7 @@
 \subsection{Descrizione del Problema}
 \subsubsection{Descrizione informale del problema}
 È dato un ambiente discreto rappresentato da una griglia quadrata $N \times N$.
-Ogni cella è identificata dalla coppia di coordinate $(r, c)$ con $1 \le r, c \le N$ ed è di uno di due tipi:
+Ogni cella è identificata dalla coppia di coordinate $(r, c)$ con $0 \le r, c \le N-1$ ed è di uno di due tipi:
 \begin{itemize}
     \item \textbf{Libera}: il robot può occuparla;
     \item \textbf{Ostacolo}: il robot non può occuparla.
@@ -34,7 +34,7 @@ Raggiungimento della cella Goal & $+100$ \\
 \end{table}
 
 \noindent
-\textbf{Obiettivo:} Determinare, per ogni cella libera della griglia, il valore della soluzione ottima V* e ricostruire un cammino ottimo da $S$ a $G$ (grazie alla matrice $\pi^*$).
+\textbf{Obiettivo:} Determinare, per ogni cella libera della griglia, il valore della soluzione ottima $V^*$ e ricostruire un cammino ottimo da $S$ a $G$ (grazie alla matrice $\pi^*$).
 
 \clearpage
 \subsubsection{Formalizzazione}
@@ -44,9 +44,9 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     \item \textbf{Spazio degli stati} $\mathcal{S}$:
     L'insieme di tutte le celle libere della griglia $N \times N$:
     \[
-    \mathcal{S} = \{(r,c) : 1 \le r,c \le N,\ \text{Grid}[r,c] \ne \text{OSTACOLO}\}
+    \mathcal{S} = \{(r,c) : 0 \le r,c \le N-1,\ \text{Grid}[r,c] \ne \text{OSTACOLO}\}
     \]
-    La cella obiettivo $G \in \mathcal{S}$ è definita come \textbf{stato terminale assorbente}.
+    La cella obiettivo $G \in \mathcal{S}$ è definita come \textbf{stato terminale assorbente}. Si noti che in generale $|\mathcal{S}| \le N^2$, con uguaglianza solo in assenza di ostacoli.
 
     \item \textbf{Spazio delle azioni} $\mathcal{A}$:
     L'insieme delle 4 direzioni cardinali ammissibili per il movimento del robot:
@@ -57,24 +57,28 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     \item \textbf{Funzione di transizione} $\delta : \mathcal{S} \times \mathcal{A} \to \mathcal{S}$:
     Determina lo stato di destinazione in modo deterministico:
     \[
-    \delta(s,a) = \begin{cases} 
-    s' & \text{se la cella adiacente in direzione } a \text{ è libera e dentro la griglia} \\ 
-    s & \text{in caso di urto contro un ostacolo o il bordo} 
+    \delta(s,a) = \begin{cases}
+    s' & \text{se la cella adiacente in direzione } a \text{ è libera e dentro la griglia} \\
+    s & \text{in caso di urto contro un ostacolo o il bordo}
     \end{cases}
     \]
 
     \item \textbf{Funzione di premio} $R : \mathcal{S} \times \mathcal{A} \to \mathbb{R}$:
     Rappresenta la ricompensa immediata ottenuta eseguendo l'azione $a$ dallo stato $s$:
     \[
-    R(s,a) = \begin{cases} 
-    c_{\text{urto}} = -10 & \text{se } \delta(s,a) = s \text{ (urto)} \\ 
-    c_{\text{raggiungimento}} = +100 & \text{se } \delta(s,a) = G \text{ (obiettivo raggiunto)} \\ 
-    c_{\text{passo}} = -1 & \text{altrimenti (spostamento valido)} 
+    R(s,a) = \begin{cases}
+    c_{\text{urto}} = -10 & \text{se } \delta(s,a) = s \text{ (urto)} \\
+    c_{\text{raggiungimento}} = +100 & \text{se } \delta(s,a) = G \text{ (obiettivo raggiunto)} \\
+    c_{\text{passo}} = -1 & \text{altrimenti (spostamento valido)}
     \end{cases}
     \]
     \textit{Nota}: Il costo $c_{\text{passo}} = -1$ incentiva il robot a trovare il cammino di lunghezza minima verso $G$.
 
-    \item \textbf{Fattore di sconto}: $\gamma = 1$, riflette il fatto che il robot ugualmente valuta i premi futuri rispetto a quelli immediati. In combinazione con la struttura dei premi, garantisce che il cammino ottimo sia quello di lunghezza minima.
+    \item \textbf{Fattore di sconto} $\gamma = 1$: i premi futuri vengono valutati esattamente quanto quelli immediati, senza alcuna penalizzazione temporale. In combinazione con la struttura dei premi ciò garantisce che il cammino ottimo sia quello di lunghezza minima: percorrendo $L$ mosse da $s$ fino a $G$ il ritorno complessivo vale ($s_0 \neq G$)
+    \[
+    -(L-1) + 100 = 101 - L,
+    \]
+    quindi massimizzare il ritorno equivale esattamente a minimizzare $L$. Questa scelta ha però una conseguenza importante sulla terminazione dell'algoritmo, discussa nella sezione seguente.
 \end{itemize}
 
 \clearpage
@@ -106,7 +110,27 @@ Per risolvere l'MDP e determinare il cammino ottimo si definiscono tre entità f
     \[
     \pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s,a) = \arg\max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V^*(\delta(s,a)) \right\}
     \]
+    Quando più azioni realizzano lo stesso valore massimo, l'$\arg\max$ non è univoco: la politica ottima non è quindi necessariamente unica, mentre $V^*$ lo è sempre.
 \end{enumerate}
+
+\subsubsection{Ipotesi di raggiungibilità e terminazione}
+Con $\gamma = 1$ la convergenza della Value Iteration non è garantita su qualunque istanza, ma richiede un'ipotesi esplicita sul dominio:
+
+\begin{quote}
+	\textbf{Ipotesi (R).} Da ogni cella libera $s \in \mathcal{S}$ esiste una sequenza di azioni che conduce alla cella obiettivo $G$.
+\end{quote}
+
+\noindent
+Poiché ogni spostamento tra due celle libere adiacenti può essere compiuto anche in senso inverso, l'ipotesi (R) equivale a richiedere che le celle libere formino un'unica regione connessa.
+
+\noindent\\
+L'ipotesi è necessaria: se una cella libera $s$ non potesse raggiungere $G$, ogni azione disponibile in $s$ produrrebbe un premio negativo ($-1$ oppure $-10$) senza mai incassare il premio terminale $+100$, e si avrebbe $V^*(s) = -\infty$. In quel caso il valore di $s$ diminuirebbe di almeno $1$ a ogni iterazione, $\Delta$ non scenderebbe mai sotto $\epsilon$ e il ciclo \texttt{while} non terminerebbe.
+
+\noindent\\
+Sotto l'ipotesi (R) la convergenza è invece garantita e, come si dimostrerà nell'analisi asintotica, avviene in un numero finito e limitato di iterazioni. L'ipotesi potrebbe essere verificata con una visita preliminare della griglia a partire da $G$; si è preferito invece dotare entrambi gli pseudocodici di un limite di sicurezza sul numero di iterazioni, che ne garantisce comunque la terminazione e segnala l'anomalia.
+
+\paragraph{Come mai non $\gamma < 1$ ?}
+Con un fattore di sconto $\gamma < 1$ la Value Iteration converge su qualunque istanza, anche senza l'ipotesi (R), perché a ogni iterazione il massimo scarto dai valori ottimi si riduce almeno di un fattore $\gamma$. Questa scelta è però inadatta al problema considerato. Un premio ottenuto dopo $d$ mosse viene infatti pesato $\gamma^{d-1}$ e nelle istanze a corridoio la distanza tra $S$ e $G$ è dell'ordine di $N^2$: con $\gamma = 0{,}95$, ad esempio, il premio del Goal raggiunto dopo $707$ mosse (distanza tra $S$ e $G$ nell'istanza con $N = 40$) viene moltiplicato per $0{,}95^{706} \approx 2 \cdot 10^{-16}$. Per il criterio scontato, raggiungere $G$ e vagare indefinitamente sulla griglia (con ritorno che tende a $-1/(1-\gamma) = -20$) hanno quindi quasi lo stesso valore. La Value Iteration si arresta allora prima che l'informazione sul Goal raggiunga le celle più lontane: la politica calcolata non conduce da $S$ a $G$.
 
 \clearpage
 \subsection{Dimostrazione dell'applicabilità della Programmazione Dinamica}
@@ -123,18 +147,23 @@ Nel nostro problema:
 Di conseguenza, la soluzione del problema principale per la cella $s$ si compone direttamente a partire dalla soluzione ottima del sottoproblema relativo allo stato adiacente $\delta(s, a^*)$ scelto dalla politica ottima.
 
 \subsubsection{Secondo Segno Distintivo: Risoluzione dello stesso sottoproblema più volte}
-Definizione ricorsiva della funzione valore $V(s)$ per una generica cella $s$:
+L'equazione di Bellman definisce $V^*$ in modo circolare: $V^*(s)$ dipende dai valori delle celle adiacenti, che a loro volta dipendono da $V^*(s)$, poiché ogni mossa tra celle libere può essere compiuta anche in senso inverso; in caso di urto, inoltre, $\delta(s,a) = s$ e $V^*(s)$ dipende direttamente da se stesso. Una procedura ricorsiva costruita direttamente su questa equazione non terminerebbe mai.
+
+\noindent\\
+Per ottenere una ricorrenza ben fondata si considera anche il numero di mosse ancora disponibili: sia $V_k(s)$ il massimo ritorno ottenibile partendo da $s$ con al più $k$ mosse. Vale
 \[
-V(s) = \begin{cases} 
-0 & \text{se } s = G \\ 
-\max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V(\delta(s,a)) \right\} & \text{se } s \in \mathcal{S} \setminus \{G\} 
+V_k(s) = \begin{cases}
+0 & \text{se } k = 0 \text{ oppure } s = G \\
+\max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V_{k-1}(\delta(s,a)) \right\} & \text{se } k \ge 1 \text{ e } s \in \mathcal{S} \setminus \{G\}
 \end{cases}
 \]
+Ogni chiamata ricorsiva riduce $k$ di uno, quindi la ricorsione termina; come si dimostra nell'analisi asintotica, inoltre, $V_k$ coincide con $V^*$ non appena $k$ raggiunge la distanza dal Goal della cella libera più lontana.
 
-\noindent
-La definizione ricorsiva è difficile da scrivere come una ricorrenza in quanto nè la dimensione della griglia diminuisce ad ogni iterazione nè diminuisce la distanza da G. 
-Si potrebbe esprimere la ricorsione in termini di orrizzonte temporale, però abbiamo preferito lasciarla così in quanto è molto più intuitiva.\\
-Importante notare che usando questo approccio ricorsivo senza l'uso della programmazione dinamica, molti sottoproblemi vengono risolti più volte, in quanto la funzione valore $V(s)$ viene calcolata per ogni cella libera della griglia, e ciascuna cella può essere raggiunta da più celle adiacenti.
+\noindent\\
+I sottoproblemi sono le coppie $(s, k)$ e si sovrappongono: $V_{k-1}(s')$ serve al calcolo di $V_k$ in tutte le celle che raggiungono $s'$ con una mossa, cioè fino a quattro celle adiacenti, più $s'$ stessa in caso di urto. Una ricorsione senza memorizzazione che calcoli $V_k(s)$ esegue quindi un numero esponenziale di chiamate: ogni chiamata su una cella diversa da $G$ ne genera quattro, una per azione, e al più una di queste raggiunge $G$ e termina subito, per cui le chiamate sono almeno $3^k$. I sottoproblemi distinti sono invece soltanto $|\mathcal{S}| \cdot (k+1)$. Nell'istanza con $N = 20$, ad esempio, la cella libera più lontana dista $123$ mosse dal Goal: per calcolarne il valore ottimo servirebbero almeno $3^{123} \approx 5 \cdot 10^{58}$ chiamate, a fronte di $292 \cdot 124 = 36.208$ sottoproblemi distinti per l'intera istanza.
+
+\noindent\\
+L'algoritmo \texttt{GRID-VALUE-ITERATION} risolve ciascun sottoproblema una sola volta, riempiendo la tabella dal basso per valori crescenti di $k$: l'iterazione $k$ del ciclo \texttt{while} calcola $V_k$ a partire da $V_{k-1}$, conservata in $V_{old}$. Poiché $V_k$ dipende soltanto da $V_{k-1}$, è sufficiente conservare due livelli della tabella invece di tutti. Quando due livelli consecutivi coincidono ($\Delta = 0$) coincidono anche tutti i successivi, e la tabella contiene $V^*$.
 
 \clearpage
 \subsection{Pseudocodice dell'Algoritmo}
@@ -146,11 +175,11 @@ In questa sezione vengono presentati gli pseudocodici sviluppati secondo il para
 \end{enumerate}
 
 \subsubsection{Pseudocodice per il valore di una soluzione ottima}
-L'algoritmo \texttt{GRID-VALUE-ITERATION} riceve in ingresso la griglia, la cella obiettivo $G$, il fattore di sconto $\gamma$ e la tolleranza $\epsilon > 0$. Il ciclo principale \texttt{while} esegue aggiornamenti successivi della tabella dei valori $V$ fino a convergenza, ovvero fino a quando la massima variazione dei valori tra due iterazioni consecutive ($\Delta$) risulta inferiore a $\epsilon$.
+L'algoritmo \texttt{GRID-VALUE-ITERATION} riceve in ingresso la griglia, la cella obiettivo $G$, il fattore di sconto $\gamma$ e la tolleranza $\epsilon > 0$. Il ciclo principale \texttt{while} esegue aggiornamenti successivi della tabella dei valori $V$ fino a convergenza, ovvero fino a quando la massima variazione dei valori tra due iterazioni consecutive ($\Delta$) risulta inferiore a $\epsilon$. Il contatore $k$, confrontato con il limite $max\_iter = N^2 + 1$, garantisce la terminazione anche quando l'ipotesi (R) non è soddisfatta.
 
 \paragraph{Ingresso:}
 \begin{itemize}
-    \item $Grid[1..N, 1..N]$: matrice $N \times N$ rappresentante l'ambiente ($Grid[r,c] = \text{LIBERA}$ oppure $\text{OSTACOLO}$);
+    \item $Grid[0..N-1, 0..N-1]$: matrice $N \times N$ rappresentante l'ambiente ($Grid[r,c] = \text{LIBERA}$ oppure $\text{OSTACOLO}$);
     \item $N$: dimensione del lato della griglia quadrata;
     \item $G = (r_G, c_G)$: coordinate della cella obiettivo (\textit{Goal});
     \item $\gamma$: fattore di sconto;
@@ -159,68 +188,90 @@ L'algoritmo \texttt{GRID-VALUE-ITERATION} riceve in ingresso la griglia, la cell
 
 \paragraph{Uscite:}
 \begin{itemize}
-    \item $V[1..N, 1..N]$: tabella ausiliaria contenente i valori ottimi $V^*(s)$ per ogni stato $s = (r,c)$;
-    \item $\pi[1..N, 1..N]$: tabella ausiliaria per la memorizzazione dell'azione ottima $\pi^*(s) \in \mathcal{A}$ da intraprendere da ciascuna cella $s = (r,c)$.
+    \item $V[0..N-1, 0..N-1]$: tabella ausiliaria contenente i valori ottimi $V^*(s)$ per ogni stato $s = (r,c)$;
+    \item $\pi[0..N-1, 0..N-1]$: tabella ausiliaria per la memorizzazione dell'azione ottima $\pi^*(s) \in \mathcal{A}$ da intraprendere da ciascuna cella $s = (r,c)$.
 \end{itemize}
 
-\vspace{0.3cm}
-\noindent\textbf{GRID-VALUE-ITERATION}$(Grid, N, G, \gamma, \epsilon)$
-\begin{enumerate}
-    \item \textbf{for} $r \gets 1$ \textbf{to} $N$
-    \item \quad \textbf{do for} $c \gets 1$ \textbf{to} $N$
-    \item \quad\quad \textbf{do} $V[r, c] \gets 0$
-    \item \quad\quad\quad $\pi[r, c] \gets \text{NIL}$
-    \item $\Delta \gets \infty$
-    \item \textbf{while} $\Delta \ge \epsilon$
-    \item \quad \textbf{do} $\Delta \gets 0$
-    \item \quad\quad $V_{old} \gets V$
-    \item \quad\quad \textbf{for} $r \gets 1$ \textbf{to} $N$
-    \item \quad\quad\quad \textbf{do for} $c \gets 1$ \textbf{to} $N$
-    \item \quad\quad\quad\quad \textbf{do} $s \gets (r, c)$
-    \item \quad\quad\quad\quad\quad \textbf{if} $Grid[r, c] \ne \text{OSTACOLO}$ \textbf{and} $s \ne G$
-    \item \quad\quad\quad\quad\quad\quad \textbf{then} $max\_q \gets -\infty$
-    \item \quad\quad\quad\quad\quad\quad\quad $best\_a \gets \text{NIL}$
-    \item \quad\quad\quad\quad\quad\quad\quad \textbf{for each} $a \in \{\text{NORD}, \text{SUD}, \text{EST}, \text{OVEST}\}$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad \textbf{do} $s' \gets \delta(s, a)$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad $q \gets R(s, a) + \gamma \cdot V_{old}[r[s'], c[s']]$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad \textbf{if} $q > max\_q$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \textbf{then} $max\_q \gets q$
-    \item \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad $best\_a \gets a$
-    \item \quad\quad\quad\quad\quad\quad\quad $V[r, c] \gets max\_q$
-    \item \quad\quad\quad\quad\quad\quad\quad $\pi[r, c] \gets best\_a$
-    \item \quad\quad\quad\quad\quad\quad\quad $\Delta \gets \max(\Delta, |V_{old}[r, c] - V[r, c]|)$
-    \item \textbf{return} $(V, \pi)$
-\end{enumerate}
+\noindent
+Per leggibilità il calcolo del massimo su $\mathcal{A}$ per una singola cella è isolato nella procedura ausiliaria \texttt{BELLMAN-UPDATE} (Algoritmo~\ref{alg:bellman}), che applica l'Equazione di Ottimalità di Bellman alla cella $s$ leggendo i valori dell'iterazione precedente. Nel seguito, per $s = (r,c)$, si scrive $V[s]$ in luogo di $V[r,c]$ (analogamente per $V_{old}$, $\pi$ e $Grid$).
+
+\begin{algorithm}[H]
+\caption{Aggiornamento di Bellman per una singola cella}
+\label{alg:bellman}
+\begin{algorithmic}[1]
+\Statex \textbf{BELLMAN-UPDATE}$(s, V_{old}, \gamma)$
+\State $max\_q \gets -\infty$;\ \ $best\_a \gets \text{NIL}$
+\For{$a \in \{\text{NORD}, \text{SUD}, \text{EST}, \text{OVEST}\}$} \label{bu:for}
+    \State \Do $s' \gets \delta(s, a)$
+    \State $q \gets R(s, a) + \gamma \cdot V_{old}[s']$
+    \If{$q > max\_q$}
+        \State \Then $max\_q \gets q$;\ \ $best\_a \gets a$ \label{bu:endfor}
+    \EndIf
+\EndFor
+\State \Return $(max\_q, best\_a)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Calcolo del valore di una soluzione ottima}
+\label{alg:gvi}
+\begin{algorithmic}[1]
+\Statex \textbf{GRID-VALUE-ITERATION}$(Grid, N, G, \gamma, \epsilon)$
+\For{$r \gets 0$ \textbf{to} $N-1$} \label{gvi:init-start}
+    \DoFor{$c \gets 0$ \textbf{to} $N-1$}
+        \State \Do $V[r, c] \gets 0$
+        \State $\pi[r, c] \gets \text{NIL}$
+    \EndDoFor
+\EndFor
+\State $\Delta \gets \infty$;\ \ $k \gets 0$;\ \ $max\_iter \gets N^2 + 1$ \label{gvi:init-end}
+\While{$\Delta \ge \epsilon$ \textbf{and} $k < max\_iter$} \label{gvi:while}
+    \State \Do $\Delta \gets 0$;\ \ $k \gets k + 1$
+    \State $V_{old} \gets V$ \label{gvi:copy}
+    \For{$r \gets 0$ \textbf{to} $N-1$} \label{gvi:scan}
+        \DoFor{$c \gets 0$ \textbf{to} $N-1$} \label{gvi:scan-c}
+            \State \Do $s \gets (r, c)$
+            \If{$Grid[s] \ne \text{OSTACOLO}$ \textbf{and} $s \ne G$}
+                \State \Then $(V[s], \pi[s]) \gets \text{BELLMAN-UPDATE}(s, V_{old}, \gamma)$
+                \State $\Delta \gets \max(\Delta, |V_{old}[s] - V[s]|)$ \label{gvi:while-end}
+            \EndIf
+        \EndDoFor
+    \EndFor
+\EndWhile
+\If{$\Delta \ge \epsilon$}
+    \State \Then \textbf{error} ``Nessuna convergenza: esistono celle libere da cui $G$ è irraggiungibile''
+\EndIf
+\State \Return $(V, \pi)$
+\end{algorithmic}
+\end{algorithm}
 
 \clearpage
 \subsubsection{Pseudocodice per la costruzione di una soluzione ottima}
-Calcolata la tabella delle decisioni ottime $\pi$ mediante \texttt{GRID-VALUE-ITERATION}, la ricostruzione della sequenza di celle da $S$ a $G$ non richiede ulteriori valutazioni della funzione di valore, ma un semplice attraversamento deterministico guidato dalla tabella $\pi$. 
+Calcolata la tabella delle decisioni ottime $\pi$ mediante \texttt{GRID-VALUE-ITERATION}, la ricostruzione della sequenza di celle da $S$ a $G$ non richiede ulteriori valutazioni della funzione di valore, ma un semplice attraversamento deterministico guidato dalla tabella $\pi$.
 
 \noindent
 L'algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH} compone la sequenza ordinata di coordinate $P = \langle s_0, s_1, \dots, s_k \rangle$ con $s_0 = S$ e $s_k = G$. Per garantire la terminazione dell'algoritmo anche in presenza di griglie malformate o prive di soluzioni, viene introdotto un controllo sul numero massimo di passi eseguiti ($N^2$).
 
-\vspace{0.3cm}
-\noindent\textbf{CONSTRUCT-OPTIMAL-PATH}$(S, G, \pi, Grid, N)$
-\begin{enumerate}
-    \item $s_{curr} \gets S$
-    \item $P \gets \text{Queue()}$
-    \item $\text{Enqueue}(P, s_{curr})$
-    \item $steps \gets 0$
-    \item $max\_steps \gets N^2$
-    \item \textbf{while} $s_{curr} \ne G$ \textbf{and} $steps < max\_steps$
-    \item \quad \textbf{do} $a^* \gets \pi[r[s_{curr}], c[s_{curr}]]$
-    \item \quad\quad \textbf{if} $a^* = \text{NIL}$
-    \item \quad\quad\quad \textbf{then error} "Impossibile raggiungere il Goal: mossa ottima non definita"
-    \item \quad\quad $s_{next} \gets \delta(s_{curr}, a^*)$
-    \item \quad\quad \textbf{if} $s_{next} = s_{curr}$
-    \item \quad\quad\quad \textbf{then error} "La mossa ottima conduce contro un ostacolo o un bordo"
-    \item \quad\quad $\text{Enqueue}(P, s_{next})$
-    \item \quad\quad $s_{curr} \gets s_{next}$
-    \item \quad\quad $steps \gets steps + 1$
-    \item \textbf{if} $s_{curr} \ne G$
-    \item \quad \textbf{then error} "Goal non raggiungibile entro il numero massimo di passi consentiti"
-    \item \textbf{return} $P$
-\end{enumerate}
+\begin{algorithm}[H]
+\caption{Costruzione di una soluzione ottima}
+\label{alg:path}
+\begin{algorithmic}[1]
+\Statex \textbf{CONSTRUCT-OPTIMAL-PATH}$(S, G, \pi, Grid, N)$
+\State $s \gets S$;\ \ $P \gets \text{Queue()}$;\ \ $\text{Enqueue}(P, s)$;\ \ $steps \gets 0$ \label{cop:init}
+\While{$s \ne G$ \textbf{and} $steps < N^2$} \label{cop:while}
+    \State \Do $a^* \gets \pi[s]$
+    \If{$a^* = \text{NIL}$ \textbf{or} $\delta(s, a^*) = s$}
+        \State \Then \textbf{error} ``Mossa ottima non definita o diretta contro un ostacolo/bordo''
+    \EndIf
+    \State $s \gets \delta(s, a^*)$
+    \State $\text{Enqueue}(P, s)$ 
+    \State $steps \gets steps + 1$ \label{cop:while-end}
+\EndWhile
+\If{$s \ne G$}
+    \State \Then \textbf{error} ``Goal non raggiungibile entro il numero massimo di passi consentiti''
+\EndIf
+\State \Return $P$
+\end{algorithmic}
+\end{algorithm}
 
 
 \subsection{Analisi Asintotica}
@@ -228,14 +279,15 @@ L'algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH} compone la sequenza ordinata di coor
 
 \paragraph{Algoritmo \texttt{GRID-VALUE-ITERATION}:}
 \begin{itemize}
-    \item \textbf{Inizializzazione (righe 1--5):} I due cicli nidificati sulle righe $r$ e colonne $c$ scorrono tutte le $N \times N$ celle della matrice per azzerare $V$ e impostare $\pi$ a $\text{NIL}$. Ciascuna assegnazione richiede tempo $\Theta(1)$. La complessità dell'inizializzazione è dunque $\Theta(N^2)$.
-    \item \textbf{Ciclo principale di convergenza (righe 6--23):} Sia $K$ il numero totale di iterazioni del ciclo \texttt{while} eseguite prima che la variazione massima rispetti il criterio di arresto $\Delta < \epsilon$. In ciascuna delle $K$ iterazioni vengono eseguite le seguenti operazioni:
+    \item \textbf{Inizializzazione (righe \ref{gvi:init-start}--\ref{gvi:init-end}):} I due cicli nidificati sulle righe $r$ e colonne $c$ scorrono tutte le $N \times N$ celle della matrice per azzerare $V$ e impostare $\pi$ a $\text{NIL}$. Ciascuna assegnazione richiede tempo $\Theta(1)$. La complessità dell'inizializzazione è dunque $\Theta(N^2)$.
+    \item \textbf{Ciclo principale di convergenza (righe \ref{gvi:while}--\ref{gvi:while-end}):} Sia $K$ il numero totale di iterazioni del ciclo \texttt{while} eseguite prima che la variazione massima rispetti il criterio di arresto $\Delta < \epsilon$. In ciascuna delle $K$ iterazioni vengono eseguite le seguenti operazioni:
     \begin{itemize}
-        \item Scansione completa della griglia mediante due cicli \texttt{for} nidificati sulle $N \times N$ celle, per un totale di $N^2$ stati valutati;
-        \item Per ogni cella ammissibile (non ostacolo e diversa da $G$), il ciclo interno (righe 15--20) valuta le $|\mathcal{A}| = 4$ direzioni cardinali. Il calcolo dello stato di destinazione $s' = \delta(s,a)$, la lettura di $R(s,a)$ e l'accesso in tabella a $V[r[s'], c[s']]$ avvengono in tempo costante $\Theta(1)$;
-        \item L'aggiornamento dei valori $max\_q$, $best\_a$, $V[r,c]$, $\pi[r,c]$ e il calcolo del valore assoluto per $\Delta$ richiedono tempo $\Theta(1)$.
+        \item La copia $V_{old} \gets V$ (riga \ref{gvi:copy}) duplica l'intera matrice $N \times N$ e costa quindi $\Theta(N^2)$;
+        \item Scansione completa della griglia mediante due cicli \texttt{for} nidificati (righe \ref{gvi:scan}--\ref{gvi:scan-c}) sulle $N \times N$ celle, per un totale di $N^2$ stati valutati;
+        \item Per ogni cella ammissibile (non ostacolo e diversa da $G$), la chiamata a \texttt{BELLMAN-UPDATE} esegue il ciclo dell'Algoritmo~\ref{alg:bellman} (righe \ref{bu:for}--\ref{bu:endfor}), che valuta le $|\mathcal{A}| = 4$ direzioni cardinali. Il calcolo dello stato di destinazione $s' = \delta(s,a)$, la lettura di $R(s,a)$ e l'accesso in tabella a $V_{old}[s']$ avvengono in tempo costante $\Theta(1)$;
+        \item L'aggiornamento dei valori $max\_q$, $best\_a$, $V[s]$, $\pi[s]$ e il calcolo del valore assoluto per $\Delta$ richiedono tempo $\Theta(1)$.
     \end{itemize}
-    Il costo computazionale di una singola iterazione del ciclo \texttt{while} è quindi $\Theta(N^2 \cdot |\mathcal{A}|) = \Theta(N^2)$.
+    Il costo computazionale di una singola iterazione del ciclo \texttt{while} è quindi $\Theta(N^2) + \Theta(N^2 \cdot |\mathcal{A}|) = \Theta(N^2)$.
 \end{itemize}
 
 \noindent
@@ -244,28 +296,59 @@ Moltiplicando il costo di una singola iterazione per il numero complessivo di it
 T_{\text{Value-Iteration}}(N, K) = \Theta(N^2) + \Theta(K \cdot N^2) = \Theta(K \cdot N^2)
 \]
 
+\paragraph{Limitazione del numero di iterazioni $K$.}
+Il parametro $K$ non è indipendente dall'istanza. Sia $d(s,G)$ la distanza minima da $s$ a $G$, misurata in numero di mosse sul grafo delle celle libere. Per $\gamma = 1$ e con inizializzazione $V_0 \equiv 0$ si dimostra per induzione che, dopo $k \ge 1$ iterazioni, per ogni cella $s \ne G$ vale
+\[
+V_k(s) = \begin{cases}
+101 - d(s,G) = V^*(s) & \text{se } d(s,G) \le k \\
+-k & \text{se } d(s,G) > k
+\end{cases}
+\]
+Infatti $V_k(s)$ è il miglior ritorno ottenibile in al più $k$ mosse: se $G$ è raggiungibile entro $k$ mosse conviene raggiungerlo per la via più breve, altrimenti la scelta migliore è compiere $k$ passi su celle libere (premio $-1$ ciascuno), evitando gli urti ($-10$).
+
+\noindent\\
+Ne segue che l'iterazione $k$ modifica esattamente le celle con $d(s,G) \ge k$: quelle a distanza $k$ passano da $-(k-1)$ a $101-k$, quelle più lontane da $-(k-1)$ a $-k$. Detta $\text{ecc}(G) = \max_{s \in \mathcal{S}} d(s, G)$ l'\textbf{eccentricità} del Goal nel grafo delle celle libere (cioè quante mosse sono necessarie per raggiungere il Goal dalla cella libera più lontana), le iterazioni $1, \dots, \text{ecc}(G)$ producono quindi $\Delta \ge 1$, mentre l'iterazione $\text{ecc}(G)+1$ non modifica alcun valore e produce $\Delta = 0$, arrestando il ciclo. Vale quindi l'uguaglianza
+\[
+K_{\text{Standard}} = \text{ecc}(G) + 1
+\]
+e, poiché un cammino minimo non ripete stati, $\text{ecc}(G) \le |\mathcal{S}| - 1 \le N^2 - 1$, da cui
+\[
+K_{\text{Standard}} \le |\mathcal{S}| \le N^2 .
+\]
+Sostituendo nella formula precedente si ottiene la limitazione superiore per il caso peggiore:
+\[
+T_{\text{Value-Iteration}}(N) = O(N^2 \cdot N^2) = O(N^4)
+\]
+La limitazione vale anche quando l'ipotesi (R) non è soddisfatta, poiché in quel caso il ciclo viene interrotto dal limite di sicurezza dopo $max\_iter = N^2 + 1$ iterazioni. Sotto l'ipotesi (R), invece, $K_{\text{Standard}} \le N^2 < max\_iter$ e il limite di sicurezza non interviene mai.
+
+\noindent\\
+Il caso peggiore è raggiunto dalle istanze a corridoio unico (serpentine e labirinti a pettine), in cui l'unico cammino ammissibile attraversa una frazione costante delle celle libere e quindi $\text{ecc}(G) = \Theta(N^2)$. Nelle istanze poco ostruite si ha invece $\text{ecc}(G) = \Theta(N)$ e il costo scende a $\Theta(N^3)$. La verifica sperimentale di questa uguaglianza è riportata nel Compito 3.
+
+\noindent\\
+Si osservi infine che, essendo i premi interi e $\gamma = 1$, i valori calcolati sono interi e la convergenza avviene in modo \textit{esatto} ($\Delta$ diventa esattamente $0$): la tolleranza $\epsilon$ non influenza quindi il numero di iterazioni, purché $\epsilon \le 1$.
+
 \clearpage
 \paragraph{Algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH}:}
 \begin{itemize}
-    \item \textbf{Inizializzazione (righe 1--5):} L'assegnazione dello stato iniziale, la creazione della coda $P$, l'inserimento del primo elemento e l'impostazione dei contatori richiedono tempo $\Theta(1)$.
-    \item \textbf{Ciclo di ricostruzione del cammino (righe 6--15):} Il ciclo \texttt{while} viene eseguito una volta per ciascuna cella che compone il cammino ottimo $P$. Sia $L$ la lunghezza del percorso estratto (in numero di passi), con $1 \le L \le N^2$:
+    \item \textbf{Inizializzazione (riga \ref{cop:init}):} L'assegnazione dello stato iniziale, la creazione della coda $P$ contenente $S$ e l'azzeramento del contatore richiedono tempo $\Theta(1)$.
+    \item \textbf{Ciclo di ricostruzione del cammino (righe \ref{cop:while}--\ref{cop:while-end}):} Sia $L$ la lunghezza del percorso estratto (in numero di passi), con $0 \le L \le N^2$. Il ciclo \texttt{while} viene eseguito una volta per ciascun passo del cammino ottimo, cioè $L$ volte, e ogni iterazione aggiunge una cella a $P$:
     \begin{itemize}
-        \item Ad ogni passo, l'accesso alla tabella della politica $\pi[r[s_{curr}], c[s_{curr}]]$ avviene in tempo $\Theta(1)$;
-        \item La funzione di transizione $\delta(s_{curr}, a^*)$ e le operazioni di verifica sugli errori e sugli stalli richiedono tempo $\Theta(1)$;
-        \item L'operazione $\text{Enqueue}(P, s_{next})$ inserisce l'elemento in coda in tempo $\Theta(1)$.
+        \item Ad ogni passo, l'accesso alla tabella della politica $\pi[s]$ avviene in tempo $\Theta(1)$;
+        \item La funzione di transizione $\delta(s, a^*)$ e le operazioni di verifica sugli errori e sugli stalli richiedono tempo $\Theta(1)$;
+        \item L'operazione $\text{Enqueue}(P, s)$ inserisce l'elemento in coda in tempo $\Theta(1)$.
     \end{itemize}
-    Il ciclo termina quando $s_{curr} = G$ (oppure se viene raggiunto il limite di sicurezza $max\_steps = N^2$).
+    Il ciclo termina quando $s = G$ (oppure se viene raggiunto il limite di sicurezza di $N^2$ passi).
 \end{itemize}
 
 \noindent
 La complessità temporale di \texttt{CONSTRUCT-OPTIMAL-PATH} è quindi proporzionale alla lunghezza del cammino ottimo $L$:
 \[
-T_{\text{Construct-Path}}(L) = \Theta(L)
+T_{\text{Construct-Path}}(L) = \Theta(L + 1)
 \]
-Nel caso peggiore in cui il cammino ottimo attraversi la quasi totalità delle celle libere della griglia allora $L=N^2$, altrimenti nel caso migliore abbiamo $L=1$. Di conseguenza possiamo affermare che la complessità temporale sia compresa, in generale, fra $\Omega(1)$ e $O(N^2)$.
+Nel caso peggiore in cui il cammino ottimo attraversi la quasi totalità delle celle libere della griglia allora $L = \Theta(N^2)$, mentre nel caso migliore $S = G$ e si ha $L = 0$. Di conseguenza possiamo affermare che la complessità temporale sia compresa, in generale, fra $\Omega(1)$ e $O(N^2)$.
 \paragraph{Complessità Temporale Complessiva dell'intero procedimento:}
 \[
-T_{\text{Totale}}(N, K, L) = \Theta(K \cdot N^2) + \Theta(L) = \Theta(K \cdot N^2)
+T_{\text{Totale}}(N, K, L) = \Theta(K \cdot N^2) + \Theta(L + 1) = \Theta(K \cdot N^2) = O(N^4)
 \]
 
 \clearpage
@@ -273,25 +356,26 @@ T_{\text{Totale}}(N, K, L) = \Theta(K \cdot N^2) + \Theta(L) = \Theta(K \cdot N^
 
 \paragraph{1. Memoria allocata da \texttt{GRID-VALUE-ITERATION}:}
 \begin{itemize}
-    \item \textbf{Matrice della griglia $Grid[1..N, 1..N]$:} occupa una quantità di memoria pari a $\Theta(N^2)$ celle;
-    \item \textbf{Tabella dei valori $V[1..N, 1..N]$:} matrice di numeri reali di dimensione $N \times N$, pari a $\Theta(N^2)$ spazio;
-    \item \textbf{Tabella della politica $\pi[1..N, 1..N]$:} matrice di elementi dell'alfabeto $\mathcal{A} \cup \{\text{NIL}\}$ di dimensione $N \times N$, pari a $\Theta(N^2)$ spazio;
-    \item \textbf{Variabili scalari ausiliarie:} le variabili $r, c, \Delta, v_{old}, max\_q, best\_a, q, s, s'$ occupano uno spazio costante $\Theta(1)$.
+    \item \textbf{Matrice della griglia $Grid[0..N-1, 0..N-1]$:} occupa una quantità di memoria pari a $\Theta(N^2)$ celle;
+    \item \textbf{Tabella dei valori $V[0..N-1, 0..N-1]$:} matrice di numeri reali di dimensione $N \times N$, pari a $\Theta(N^2)$ spazio;
+    \item \textbf{Tabella della politica $\pi[0..N-1, 0..N-1]$:} matrice di elementi dell'alfabeto $\mathcal{A} \cup \{\text{NIL}\}$ di dimensione $N \times N$, pari a $\Theta(N^2)$ spazio;
+    \item \textbf{Copia di lavoro $V_{old}[0..N-1, 0..N-1]$ (riga \ref{gvi:copy}):} lo schema di aggiornamento \textbf{sincrono} richiede di conservare, per tutta la durata di ogni iterazione, l'intera tabella dei valori dell'iterazione precedente. Si tratta di una seconda matrice $N \times N$ di numeri reali, pari a ulteriori $\Theta(N^2)$ spazio. Questo è l'unico termine \textit{ausiliario} in senso stretto, cioè non richiesto dalla specifica del problema né dal formato dell'uscita: è precisamente il termine che la variante in-place del Compito 2 elimina;
+    \item \textbf{Variabili scalari ausiliarie:} le variabili $s, \Delta, k, max\_iter$ e, in \texttt{BELLMAN-UPDATE}, $a, s', q, max\_q, best\_a$ occupano uno spazio costante $\Theta(1)$.
 \end{itemize}
 
-La complessità spaziale occupata dalle strutture tabulari è pertanto $\Theta(N^2)$.
+La complessità spaziale occupata dalle strutture tabulari è pertanto $\Theta(N^2)$, di cui $\Theta(N^2)$ di memoria \textit{ausiliaria} imputabile alla sola copia $V_{old}$.
 
 \paragraph{2. Memoria allocata da \texttt{CONSTRUCT-OPTIMAL-PATH}:}
 \begin{itemize}
-    \item \textbf{Struttura dati Coda $P$:} memorizza la sequenza delle coordinate delle celle del cammino ottimo da $S$ a $G$. Nel caso di un cammino lungo $L$ passi, la coda contiene $L + 1$ coppie di coordinate $(r, c)$, occupando uno spazio pari a $\Theta(L)$;
-    \item \textbf{Variabili di controllo:} le variabili scalari $s_{curr}, s_{next}, a^*, steps, max\_steps$ occupano memoria costante $\Theta(1)$.
+    \item \textbf{Struttura dati Coda $P$:} memorizza la sequenza delle coordinate delle celle del cammino ottimo da $S$ a $G$. Nel caso di un cammino lungo $L$ passi, la coda contiene $L + 1$ coppie di coordinate $(r, c)$, occupando uno spazio pari a $\Theta(L + 1)$;
+    \item \textbf{Variabili di controllo:} le variabili scalari $s, a^*, steps$ occupano memoria costante $\Theta(1)$.
 \end{itemize}
 
 \noindent
 Poiché il percorso $P$ non può superare il numero totale di celle della griglia ($L \le N^2$), lo spazio massimo richiesto dalla coda è $O(N^2)$.
 
 \paragraph{Complessità Spaziale Complessiva dell'intero procedimento:}
-Considerando tutte le tabelle ausiliarie ($V$, $\pi$) e la struttura dati della soluzione ($P$), la memoria complessiva richiesta è dominata dalle matrici $N \times N$:
+Considerando tutte le tabelle ausiliarie ($V$, $V_{old}$, $\pi$) e la struttura dati della soluzione ($P$), la memoria complessiva richiesta è dominata dalle matrici $N \times N$:
 \[
 S_{\text{Totale}}(N) = \Theta(N^2)
 \]
