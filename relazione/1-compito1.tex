@@ -74,7 +74,7 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     \]
     \textit{Nota}: Il costo $c_{\text{passo}} = -1$ incentiva il robot a trovare il cammino di lunghezza minima verso $G$.
 
-    \item \textbf{Fattore di sconto} $\gamma = 1$: i premi futuri vengono valutati esattamente quanto quelli immediati, senza alcuna penalizzazione temporale. In combinazione con la struttura dei premi ciò garantisce che il cammino ottimo sia quello di lunghezza minima: percorrendo $L$ mosse da $s$ fino a $G$ il ritorno complessivo vale
+    \item \textbf{Fattore di sconto} $\gamma = 1$: i premi futuri vengono valutati esattamente quanto quelli immediati, senza alcuna penalizzazione temporale. In combinazione con la struttura dei premi ciò garantisce che il cammino ottimo sia quello di lunghezza minima: percorrendo $L$ mosse da $s$ fino a $G$ il ritorno complessivo vale ($s_0 \neq G$)
     \[
     -(L-1) + 100 = 101 - L,
     \]
