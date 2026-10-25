@@ -4,7 +4,6 @@
 #include <string>
 #include <filesystem>
 
-// Le istanze vengono scritte nella cartella letta da main.cpp
 const std::string OUTPUT_DIR = "istanze";
 
 void saveGridToFile(const std::string& filename, int N, std::pair<int,int> S, std::pair<int,int> G, const std::vector<std::vector<int>>& grid) {
@@ -28,7 +27,6 @@ void saveGridToFile(const std::string& filename, int N, std::pair<int,int> S, st
     std::cout << "Generato: " << path << " (N = " << N << ")\n";
 }
 
-// 1. Serpentina / Snake
 void generateSnake(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     for (int r = 2; r < N - 2; r += 3) {
@@ -42,7 +40,6 @@ void generateSnake(int N, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {N - 1, N - 1}, grid);
 }
 
-// 2. Stanze suddivise (Griglia K x K)
 void generateRooms(int N, int rooms_per_side, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     int step = N / rooms_per_side;
@@ -54,7 +51,6 @@ void generateRooms(int N, int rooms_per_side, const std::string& filename) {
             grid[k][wall_pos] = 1;
         }
     }
-    // Apertura porte nei muri
     for (int i = 0; i < rooms_per_side; ++i) {
         for (int j = 0; j < rooms_per_side; ++j) {
             if (i < rooms_per_side - 1) grid[(i + 1) * step][j * step + step / 2] = 0;
@@ -64,7 +60,6 @@ void generateRooms(int N, int rooms_per_side, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {N - 1, N - 1}, grid);
 }
 
-// 3. Spirale Concentrica
 void generateSpiral(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     int layers = N / 4;
@@ -72,7 +67,6 @@ void generateSpiral(int N, const std::string& filename) {
         int top = 2 * l, bottom = N - 1 - 2 * l;
         int left = 2 * l, right = N - 1 - 2 * l;
         
-        // Blocca la spirale prima che soffochi il Goal centrale
         if (top >= bottom - 1 || left >= right - 1) break;
 
         for (int c = left; c <= right; ++c) grid[top][c] = 1;
@@ -83,7 +77,6 @@ void generateSpiral(int N, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {N / 2, N / 2}, grid);
 }
 
-// 4. Labirinto a Pettine
 void generateComb(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     for (int c = 2; c < N - 2; c += 2) {
@@ -97,7 +90,6 @@ void generateComb(int N, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {0, N - 1}, grid);
 }
 
-// 5. Anelli Concentrici
 void generateRings(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     int step = 4;
@@ -107,7 +99,6 @@ void generateRings(int N, const std::string& filename) {
         for (int i = c1; i <= c2; ++i) { grid[r1][i] = 1; grid[r2][i] = 1; }
         for (int i = r1; i <= r2; ++i) { grid[i][c1] = 1; grid[i][c2] = 1; }
         
-        // Porte su lati alternati
         if ((k / step) % 2 == 0) {
             grid[r1][c1 + (c2 - c1) / 2] = 0;
             grid[r2][c1 + (c2 - c1) / 2] = 0;
@@ -119,10 +110,8 @@ void generateRings(int N, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {N / 2, N / 2}, grid);
 }
 
-// 6. Pilastri Spessi
 void generatePillars(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
-    // Limite r < N - 3 per non toccare il Goal a (N-1, N-1)
     for (int r = 2; r < N - 3; r += 5) {
         for (int c = 2; c < N - 3; c += 5) {
             for (int dr = 0; dr < 3; ++dr) {
@@ -135,15 +124,14 @@ void generatePillars(int N, const std::string& filename) {
     saveGridToFile(filename, N, {0, 0}, {N - 1, N - 1}, grid);
 }
 
-// 7. Trappole a U
 void generateUTraps(int N, const std::string& filename) {
     std::vector<std::vector<int>> grid(N, std::vector<int>(N, 0));
     for (int r = 4; r < N - 4; r += 8) {
         for (int c = 4; c < N - 4; c += 8) {
             for (int i = 0; i < 5; ++i) {
-                grid[r + 4][c + i] = 1; // Fondo della U
-                grid[r + i][c] = 1;     // Lato sinistro
-                grid[r + i][c + 4] = 1; // Lato destro
+                grid[r + 4][c + i] = 1;
+                grid[r + i][c] = 1;
+                grid[r + i][c + 4] = 1;
             }
         }
     }

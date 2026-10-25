@@ -9,9 +9,7 @@
 #include "GridMDP.hpp"
 #include "MemoryTracker.hpp"
 
-// Larghezza delle colonne della tabella di benchmark. La somma determina la lunghezza
-// delle righe di separazione, che restano così allineate alle colonne anche se una di
-// queste viene modificata.
+// larghezza delle colonne della tabella di benchmark
 constexpr int COL_N           = 8;
 constexpr int COL_VARIANTE    = 14;
 constexpr int COL_ITERAZIONI  = 14;
@@ -19,14 +17,12 @@ constexpr int COL_TEMPO       = 18;
 constexpr int COL_MEMORIA     = 20;
 constexpr int TABLE_WIDTH = COL_N + COL_VARIANTE + COL_ITERAZIONI + COL_TEMPO + COL_MEMORIA;
 
-// Struttura per memorizzare le metriche di benchmark
 struct BenchmarkResult {
     int iterations{0};
     double time_ms{0.0};
     double memory_extra_kb{0.0};
 };
 
-// Funzione generica per misurare l'esecuzione di un algoritmo di risoluzione
 template <typename SolverFunc>
 BenchmarkResult measurePerformance(SolverFunc solver, ValueMatrix& V, PolicyMatrix& pi) {
     MemoryTracker mem_tracker;
@@ -218,13 +214,11 @@ void saveSolutionToFile(
 }
 
 int main() {
-    // Percorsi dei file d'istanza presi dalla cartella 'istanze/'
     const std::vector<std::string> input_files = {
         "istanze/grid_1.txt", "istanze/grid_2.txt", "istanze/grid_3.txt", "istanze/grid_4.txt", "istanze/grid_5.txt",
         "istanze/grid_6.txt", "istanze/grid_7.txt", "istanze/grid_8.txt", "istanze/grid_9.txt", "istanze/grid_10.txt"
     };
 
-    // Salva il report del benchmark nella cartella "soluzioni/"
     const std::string output_benchmark = "soluzioni/risultati_benchmark.txt";
     std::ofstream outFile(output_benchmark);
 
@@ -253,35 +247,32 @@ int main() {
         ValueMatrix V_std(N, std::vector<double>(N, 0.0));
         PolicyMatrix pi_std(N, std::vector<Action>(N, Action::NONE));
 
-        // Misurazione Variante Standard
         auto res_std = measurePerformance([&](ValueMatrix& V, PolicyMatrix& pi) {
             return gridValueIteration(grid, N, G, gamma, eps, V, pi);
-        }, V_std, pi_std);
+        }, V_std, pi_std); // standard
 
         ValueMatrix V_ip(N, std::vector<double>(N, 0.0));
         PolicyMatrix pi_ip(N, std::vector<Action>(N, Action::NONE));
 
-        // Misurazione Variante In-Place
         auto res_ip = measurePerformance([&](ValueMatrix& V, PolicyMatrix& pi) {
             return gridValueIterationInPlace(grid, N, G, gamma, eps, V, pi);
-        }, V_ip, pi_ip);
+        }, V_ip, pi_ip); // in-place
 
-        // Scrittura dei risultati nel file di benchmark
         printRow(outFile, N, "Standard", res_std);
         printRow(outFile, N, "In-Place", res_ip);
         outFile << std::string(TABLE_WIDTH, '-') << "\n";
 
-        // 1. Costruzione percorso e verifica - STANDARD
+        // Costruzione percorso e verifica
         std::vector<Position> path_std = constructOptimalPath(S, G, pi_std, grid, N);
         bool goal_std = (!path_std.empty() && path_std.back() == G);
 
-        // 2. Costruzione percorso e verifica - IN-PLACE
         std::vector<Position> path_ip = constructOptimalPath(S, G, pi_ip, grid, N);
         bool goal_ip = (!path_ip.empty() && path_ip.back() == G);
 
         std::string base_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
 
-        // Stampa dettagliata a console dello stato per entrambe le varianti
+
+        // Stampa a video
         std::cout << "Istanza " << base_filename << " (N = " << N << "):\n";
         if (goal_std) {
             std::cout << "  - Standard : [OK] Goal RAGGIUNTO in " << path_std.size() - 1 << " passi.\n";

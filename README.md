@@ -18,7 +18,6 @@ con la programmazione dinamica (Value Iteration), confrontando la variante sincr
 | `istanze/` | Le 10 griglie di prova, da `N = 20` a `N = 120` |
 | `soluzioni/` | Uscite del programma: `V*`, `π*`, cammino e tabella di benchmark |
 | `relazione/` | Sorgenti LaTeX della relazione |
-| `tools/` | Script di supporto |
 
 ## Compilazione ed esecuzione
 
@@ -50,18 +49,14 @@ g++ -std=c++17 -O2 -o genera GenerateInstance.cpp && ./genera
 
 ## Compilazione della relazione
 
-I dati sperimentali citati nella relazione — tabelle, coordinate dei grafici e valori
-riportati nel testo — sono generati da un unico file a partire dall'uscita del benchmark,
-così che non possano divergere fra loro. Dopo ogni nuova esecuzione di `./gridmdp`:
-
 ```bash
-python3 tools/genera_dati_relazione.py     # aggiorna relazione/dati-benchmark.tex
 cd relazione && pdflatex main.tex && pdflatex main.tex
 ```
 
-Lo script segnala inoltre eventuali anomalie nei dati (istanze in cui l'In-Place risulta
-più lenta, celle libere da cui il Goal è irraggiungibile, scostamenti dalla relazione
-`K = ecc(G) + 1`) che richiederebbero una riformulazione del testo.
+I dati sperimentali citati nella relazione — tabelle, coordinate dei grafici e valori
+riportati nel testo — sono raccolti in `relazione/dati-benchmark.tex`, generato
+automaticamente da uno script di supporto a partire da `soluzioni/risultati_benchmark.txt`:
+il file non va quindi modificato a mano.
 
 ## Nota sul fattore di sconto
 

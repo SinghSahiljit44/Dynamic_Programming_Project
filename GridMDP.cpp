@@ -5,7 +5,7 @@
 #include <limits>
 #include <iomanip>
 
-// Spostamenti relativi per NORD, SUD, EST, OVEST (da leggere per colonna, es Nord è dato da DR[0], DC[0])
+// NORD SUD EST OVEST per riga e per colonna
 constexpr int DR[4] = {-1, 1, 0, 0};
 constexpr int DC[4] = {0, 0, 1, -1};
 

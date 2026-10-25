@@ -81,19 +81,6 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     quindi massimizzare il ritorno equivale esattamente a minimizzare $L$. Questa scelta ha però una conseguenza importante sulla terminazione dell'algoritmo, discussa nella sezione seguente.
 \end{itemize}
 
-\subsubsection{Ipotesi di raggiungibilità e terminazione}
-Con $\gamma < 1$ l'operatore di Bellman è una contrazione di fattore $\gamma$ e la convergenza della Value Iteration è garantita per qualunque istanza. Con $\gamma = 1$ questa garanzia viene meno ed è necessaria un'ipotesi esplicita sul dominio:
-
-\begin{quote}
-\textbf{Ipotesi (R).} Da ogni cella libera $s \in \mathcal{S}$ esiste una sequenza di azioni che conduce alla cella obiettivo $G$.
-\end{quote}
-
-\noindent
-L'ipotesi è necessaria: se una cella libera $s$ non potesse raggiungere $G$, ogni azione disponibile in $s$ produrrebbe un premio negativo ($-1$ oppure $-10$) senza mai incassare il premio terminale $+100$, e si avrebbe $V^*(s) = -\infty$. In quel caso i valori diminuirebbero indefinitamente a ogni iterazione, $\Delta$ non scenderebbe mai sotto $\epsilon$ e il ciclo \texttt{while} non terminerebbe.
-
-\noindent\\
-Sotto l'ipotesi (R) la convergenza è invece garantita e, come si dimostrerà nell'analisi asintotica, avviene in un numero finito e limitato di iterazioni. Poiché l'ipotesi non è verificabile a priori su un'istanza arbitraria, entrambi gli pseudocodici presentati includono un limite di sicurezza sul numero di iterazioni che ne garantisce comunque la terminazione, segnalando l'anomalia.
-
 \clearpage
 \noindent
 Per risolvere l'MDP e determinare il cammino ottimo si definiscono tre entità fondamentali legate tra loro dalle Equazioni di Ottimalità di Bellman:
@@ -126,6 +113,25 @@ Per risolvere l'MDP e determinare il cammino ottimo si definiscono tre entità f
     Quando più azioni realizzano lo stesso valore massimo, l'$\arg\max$ non è univoco: la politica ottima non è quindi necessariamente unica, mentre $V^*$ lo è sempre.
 \end{enumerate}
 
+\subsubsection{Ipotesi di raggiungibilità e terminazione}
+Con $\gamma = 1$ la convergenza della Value Iteration non è garantita su qualunque istanza, ma richiede un'ipotesi esplicita sul dominio:
+
+\begin{quote}
+	\textbf{Ipotesi (R).} Da ogni cella libera $s \in \mathcal{S}$ esiste una sequenza di azioni che conduce alla cella obiettivo $G$.
+\end{quote}
+
+\noindent
+Poiché ogni spostamento tra due celle libere adiacenti può essere compiuto anche in senso inverso, l'ipotesi (R) equivale a richiedere che le celle libere formino un'unica regione connessa.
+
+\noindent\\
+L'ipotesi è necessaria: se una cella libera $s$ non potesse raggiungere $G$, ogni azione disponibile in $s$ produrrebbe un premio negativo ($-1$ oppure $-10$) senza mai incassare il premio terminale $+100$, e si avrebbe $V^*(s) = -\infty$. In quel caso il valore di $s$ diminuirebbe di almeno $1$ a ogni iterazione, $\Delta$ non scenderebbe mai sotto $\epsilon$ e il ciclo \texttt{while} non terminerebbe.
+
+\noindent\\
+Sotto l'ipotesi (R) la convergenza è invece garantita e, come si dimostrerà nell'analisi asintotica, avviene in un numero finito e limitato di iterazioni. L'ipotesi potrebbe essere verificata con una visita preliminare della griglia a partire da $G$; si è preferito invece dotare entrambi gli pseudocodici di un limite di sicurezza sul numero di iterazioni, che ne garantisce comunque la terminazione e segnala l'anomalia.
+
+\paragraph{Come mai non $\gamma < 1$ ?}
+Con un fattore di sconto $\gamma < 1$ la Value Iteration converge su qualunque istanza, anche senza l'ipotesi (R), perché a ogni iterazione il massimo scarto dai valori ottimi si riduce almeno di un fattore $\gamma$. Questa scelta è però inadatta al problema considerato. Un premio ottenuto dopo $d$ mosse viene infatti pesato $\gamma^{d-1}$ e nelle istanze a corridoio la distanza tra $S$ e $G$ è dell'ordine di $N^2$: con $\gamma = 0{,}95$, ad esempio, il premio del Goal raggiunto dopo $707$ mosse (distanza tra $S$ e $G$ nell'istanza con $N = 40$) viene moltiplicato per $0{,}95^{706} \approx 2 \cdot 10^{-16}$. Per il criterio scontato, raggiungere $G$ e vagare indefinitamente sulla griglia (con ritorno che tende a $-1/(1-\gamma) = -20$) hanno quindi quasi lo stesso valore. La Value Iteration si arresta allora prima che l'informazione sul Goal raggiunga le celle più lontane: la politica calcolata non conduce da $S$ a $G$.
+
 \clearpage
 \subsection{Dimostrazione dell'applicabilità della Programmazione Dinamica}
 \subsubsection{Primo Segno Distintivo: Sottostruttura Ottima}
@@ -141,18 +147,23 @@ Nel nostro problema:
 Di conseguenza, la soluzione del problema principale per la cella $s$ si compone direttamente a partire dalla soluzione ottima del sottoproblema relativo allo stato adiacente $\delta(s, a^*)$ scelto dalla politica ottima.
 
 \subsubsection{Secondo Segno Distintivo: Risoluzione dello stesso sottoproblema più volte}
-Definizione ricorsiva della funzione valore $V(s)$ per una generica cella $s$:
+L'equazione di Bellman definisce $V^*$ in modo circolare: $V^*(s)$ dipende dai valori delle celle adiacenti, che a loro volta dipendono da $V^*(s)$, poiché ogni mossa tra celle libere può essere compiuta anche in senso inverso; in caso di urto, inoltre, $\delta(s,a) = s$ e $V^*(s)$ dipende direttamente da se stesso. Una procedura ricorsiva costruita direttamente su questa equazione non terminerebbe mai.
+
+\noindent\\
+Per ottenere una ricorrenza ben fondata si considera anche il numero di mosse ancora disponibili: sia $V_k(s)$ il massimo ritorno ottenibile partendo da $s$ con al più $k$ mosse. Vale
 \[
-V(s) = \begin{cases}
-0 & \text{se } s = G \\
-\max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V(\delta(s,a)) \right\} & \text{se } s \in \mathcal{S} \setminus \{G\}
+V_k(s) = \begin{cases}
+0 & \text{se } k = 0 \text{ oppure } s = G \\
+\max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V_{k-1}(\delta(s,a)) \right\} & \text{se } k \ge 1 \text{ e } s \in \mathcal{S} \setminus \{G\}
 \end{cases}
 \]
+Ogni chiamata ricorsiva riduce $k$ di uno, quindi la ricorsione termina; come si dimostra nell'analisi asintotica, inoltre, $V_k$ coincide con $V^*$ non appena $k$ raggiunge la distanza dal Goal della cella libera più lontana.
 
-\noindent
-La definizione ricorsiva è difficile da scrivere come una ricorrenza in quanto né la dimensione della griglia diminuisce a ogni iterazione né diminuisce la distanza da $G$.
-Si potrebbe esprimere la ricorsione in termini di orizzonte temporale, però abbiamo preferito lasciarla così in quanto è molto più intuitiva.\\
-Importante notare che usando questo approccio ricorsivo senza l'uso della programmazione dinamica, molti sottoproblemi vengono risolti più volte, in quanto la funzione valore $V(s)$ viene calcolata per ogni cella libera della griglia, e ciascuna cella può essere raggiunta da più celle adiacenti.
+\noindent\\
+I sottoproblemi sono le coppie $(s, k)$ e si sovrappongono: $V_{k-1}(s')$ serve al calcolo di $V_k$ in tutte le celle che raggiungono $s'$ con una mossa, cioè fino a quattro celle adiacenti, più $s'$ stessa in caso di urto. Una ricorsione senza memorizzazione che calcoli $V_k(s)$ esegue quindi un numero esponenziale di chiamate: ogni chiamata su una cella diversa da $G$ ne genera quattro, una per azione, e al più una di queste raggiunge $G$ e termina subito, per cui le chiamate sono almeno $3^k$. I sottoproblemi distinti sono invece soltanto $|\mathcal{S}| \cdot (k+1)$. Nell'istanza con $N = 20$, ad esempio, la cella libera più lontana dista $123$ mosse dal Goal: per calcolarne il valore ottimo servirebbero almeno $3^{123} \approx 5 \cdot 10^{58}$ chiamate, a fronte di $292 \cdot 124 = 36.208$ sottoproblemi distinti per l'intera istanza.
+
+\noindent\\
+L'algoritmo \texttt{GRID-VALUE-ITERATION} risolve ciascun sottoproblema una sola volta, riempiendo la tabella dal basso per valori crescenti di $k$: l'iterazione $k$ del ciclo \texttt{while} calcola $V_k$ a partire da $V_{k-1}$, conservata in $V_{old}$. Poiché $V_k$ dipende soltanto da $V_{k-1}$, è sufficiente conservare due livelli della tabella invece di tutti. Quando due livelli consecutivi coincidono ($\Delta = 0$) coincidono anche tutti i successivi, e la tabella contiene $V^*$.
 
 \clearpage
 \subsection{Pseudocodice dell'Algoritmo}
@@ -208,7 +219,8 @@ Per leggibilità il calcolo del massimo su $\mathcal{A}$ per una singola cella �
 \Statex \textbf{GRID-VALUE-ITERATION}$(Grid, N, G, \gamma, \epsilon)$
 \For{$r \gets 0$ \textbf{to} $N-1$} \label{gvi:init-start}
     \DoFor{$c \gets 0$ \textbf{to} $N-1$}
-        \State \Do $V[r, c] \gets 0$;\ \ $\pi[r, c] \gets \text{NIL}$
+        \State \Do $V[r, c] \gets 0$
+        \State $\pi[r, c] \gets \text{NIL}$
     \EndDoFor
 \EndFor
 \State $\Delta \gets \infty$;\ \ $k \gets 0$;\ \ $max\_iter \gets N^2 + 1$ \label{gvi:init-end}
@@ -251,7 +263,8 @@ L'algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH} compone la sequenza ordinata di coor
         \State \Then \textbf{error} ``Mossa ottima non definita o diretta contro un ostacolo/bordo''
     \EndIf
     \State $s \gets \delta(s, a^*)$
-    \State $\text{Enqueue}(P, s)$;\ \ $steps \gets steps + 1$ \label{cop:while-end}
+    \State $\text{Enqueue}(P, s)$ 
+    \State $steps \gets steps + 1$ \label{cop:while-end}
 \EndWhile
 \If{$s \ne G$}
     \State \Then \textbf{error} ``Goal non raggiungibile entro il numero massimo di passi consentiti''
@@ -294,7 +307,7 @@ V_k(s) = \begin{cases}
 Infatti $V_k(s)$ è il miglior ritorno ottenibile in al più $k$ mosse: se $G$ è raggiungibile entro $k$ mosse conviene raggiungerlo per la via più breve, altrimenti la scelta migliore è compiere $k$ passi su celle libere (premio $-1$ ciascuno), evitando gli urti ($-10$).
 
 \noindent\\
-Ne segue che l'iterazione $k$ modifica esattamente le celle con $d(s,G) \ge k$: quelle a distanza $k$ passano da $-(k-1)$ a $101-k$, quelle più lontane da $-(k-1)$ a $-k$. Detta $\text{ecc}(G) = \max_{s \in \mathcal{S}} d(s, G)$ l'\textbf{eccentricità} del Goal nel grafo delle celle libere, le iterazioni $1, \dots, \text{ecc}(G)$ producono quindi $\Delta \ge 1$, mentre l'iterazione $\text{ecc}(G)+1$ non modifica alcun valore e produce $\Delta = 0$, arrestando il ciclo. Vale quindi l'uguaglianza
+Ne segue che l'iterazione $k$ modifica esattamente le celle con $d(s,G) \ge k$: quelle a distanza $k$ passano da $-(k-1)$ a $101-k$, quelle più lontane da $-(k-1)$ a $-k$. Detta $\text{ecc}(G) = \max_{s \in \mathcal{S}} d(s, G)$ l'\textbf{eccentricità} del Goal nel grafo delle celle libere (cioè quante mosse sono necessarie per raggiungere il Goal dalla cella libera più lontana), le iterazioni $1, \dots, \text{ecc}(G)$ producono quindi $\Delta \ge 1$, mentre l'iterazione $\text{ecc}(G)+1$ non modifica alcun valore e produce $\Delta = 0$, arrestando il ciclo. Vale quindi l'uguaglianza
 \[
 K_{\text{Standard}} = \text{ecc}(G) + 1
 \]

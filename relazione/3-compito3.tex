@@ -59,7 +59,7 @@ Il Compito 1 dimostra che per la variante sincrona vale $K_{\text{Standard}} = \
 \end{table}
 
 \noindent
-\textbf{Commento}: la previsione è verificata \textbf{esattamente} su tutte e \benchNistanze{} le istanze, senza alcuno scarto. Si nota inoltre come il caso peggiore $\text{ecc}(G) = \Theta(N^2)$ si manifesti concretamente: nell'istanza $N=120$ (serpentina) l'eccentricità vale $\benchEccMax{}$ su $\benchLibereMax{}$ celle libere, cioè quasi metà dello spazio degli stati, e infatti $K$ esplode a $\benchKtop{}$ iterazioni contro le $199$ dell'istanza $N=100$, che pure ha una griglia comparabile. È questo, e non la dimensione $N$, il fattore che determina il costo complessivo.
+\textbf{Commento}: la previsione è verificata \textbf{esattamente} su tutte e \benchNistanze{} le istanze, senza alcuno scarto. Si nota inoltre come il caso peggiore $\text{ecc}(G) = \Theta(N^2)$ si manifesti concretamente: nell'istanza $N=120$ (serpentina) l'eccentricità vale $\benchEccMax{}$ su $\benchLibereMax{}$ celle libere, cioè quasi metà dello spazio degli stati, e infatti $K$ esplode a $\benchKtop{}$ iterazioni contro le $199$ dell'istanza $N=100$, che pure ha una griglia comparabile. È questo, non la dimensione $N$, il fattore che determina il costo complessivo.
 
 \clearpage
 \subsection{Confronto tra Analisi Asintotica e Risultati Sperimentali}
@@ -86,7 +86,7 @@ Di seguito viene evidenziata la corrispondenza tra i valori teorici del Compito 
             \item Per $N=\benchNbase{}$: $t_{\text{iter}} = \frac{\benchTempoBase{} \text{ ms}}{\benchKbase{}} \approx \benchTiterBase{} \text{ ms}$ per iterazione.
             \item Per $N=\benchNtop{}$: $t_{\text{iter}} = \frac{\benchTempoTop{} \text{ ms}}{\benchKtop{}} \approx \benchTiterTop{} \text{ ms}$ per iterazione.
         \end{itemize}
-        La regressione su tutti i punti fornisce $\alpha = \benchAlfaTempoStd{}$ ($R^2 = \benchErreQuadTempoStd{}$) per la variante Standard e $\alpha = \benchAlfaTempoIp{}$ ($R^2 = \benchErreQuadTempoIp{}$) per la In-Place: entrambi i valori sono compatibili con l'andamento teorico $\Theta(N^2)$. Il lieve scostamento verso il basso è imputabile agli effetti di cache, che favoriscono le griglie piccole interamente residenti nei livelli superiori della gerarchia di memoria.
+        La regressione su tutti i punti fornisce $\alpha = \benchAlfaTempoStd{}$ ($R^2 = \benchErreQuadTempoStd{}$) per la variante Standard e $\alpha = \benchAlfaTempoIp{}$ ($R^2 = \benchErreQuadTempoIp{}$) per la In-Place: entrambi i valori sono compatibili con l'andamento teorico $\Theta(N^2)$. Gli scostamenti residui da 2 sono piccoli e attribuibili a effetti secondari, come i costi fissi di ogni iterazione e la gerarchia di cache, oltre che alla variabilità di una singola misura.
     \end{itemize}
 
     \item \textbf{Complessità Temporale Complessiva}:
@@ -130,7 +130,7 @@ Di seguito viene evidenziata la corrispondenza tra i valori teorici del Compito 
 \end{figure}
 
 \noindent
-\textbf{Commento}: entrambe le varianti seguono la curva teorica quadratica $\Theta(N^2)$, confermando che il costo di una singola iterazione cresce quadraticamente con la dimensione della griglia; gli esponenti stimati per regressione sono $\benchAlfaTempoStd{}$ e $\benchAlfaTempoIp{}$. La dispersione residua dei punti attorno alla curva è dovuta alla variabilità del tempo di esecuzione su una macchina multiutente e agli effetti di cache, non alla geometria degli ostacoli: quest'ultima influenza il \textit{numero} di iterazioni (Figura~\ref{fig:iterazioni}), non il costo della singola iterazione, che scandisce comunque tutte le $N^2$ celle.
+\textbf{Commento}: entrambe le varianti seguono la curva teorica quadratica $\Theta(N^2)$, confermando che il costo di una singola iterazione cresce quadraticamente con la dimensione della griglia. La dispersione residua dei punti attorno alla curva è dovuta alla variabilità del tempo di esecuzione su una macchina multiutente e agli effetti di cache, non alla geometria degli ostacoli: quest'ultima influenza il \textit{numero} di iterazioni (Figura~\ref{fig:iterazioni}), non il costo della singola iterazione, che scandisce comunque tutte le $N^2$ celle.
 
 \clearpage
 % 2. Grafico delle Iterazioni di Convergenza (Diagramma a Barre)
@@ -169,7 +169,6 @@ Di seguito viene evidenziata la corrispondenza tra i valori teorici del Compito 
 \textbf{Commento}: si osserva come l'aggiornamento \textit{In-Place} acceleri la convergenza nelle istanze con $N$ pari a \benchIstanzeKridotto{}, grazie alla propagazione immediata dei valori all'interno della stessa iterazione. Nelle istanze in cui i cicli si equivalgono ($N$ pari a \benchIstanzeKpari{}) la geometria costringe la funzione valore a propagarsi in verso opposto alla scansione per righe dei cicli \texttt{for}, annullando l'effetto a catena. Si noti inoltre che $K$ non cresce monotonamente con $N$: dipende dall'eccentricità del Goal, non dalla dimensione della griglia, come mostrato nella Tabella~\ref{tab:eccentricita}.
 
 \clearpage
-% 3. Grafico dell'Occupazione di Memoria Extra vs Teorico Theta(N^2)
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}
@@ -200,6 +199,23 @@ Di seguito viene evidenziata la corrispondenza tra i valori teorici del Compito 
 
 \noindent
 \textbf{Commento}: la sovrapposizione tra stima teorica e misura empirica è pressoché perfetta ($R^2 = \benchErreQuadMem{}$). La serie In-Place resta costantemente nulla, a conferma che la variante non alloca alcuna memoria ausiliaria proporzionale a $N$.
+
+\subsection{Limitazioni riscontrate}
+Lo sviluppo e le prove di esecuzione hanno messo in evidenza le seguenti limitazioni:
+
+\begin{itemize}
+    \item \textbf{Ipotesi di raggiungibilità}: con $\gamma = 1$ la convergenza richiede l'ipotesi (R) del Compito 1, soddisfatta da tutte le istanze di prova. Su un'istanza che la viola, ad esempio con una cella libera circondata da ostacoli su tutti i lati, entrambe le varianti si arrestano soltanto al limite di sicurezza di $N^2 + 1$ iterazioni e il programma segnala l'anomalia. I valori delle celle che raggiungono il Goal e il cammino da $S$, purché $S$ raggiunga $G$, restano corretti, ma il tempo di esecuzione è quello del caso peggiore, $\Theta(N^4)$.
+
+    \item \textbf{Fattore di sconto}: come discusso nel Compito 1, adottare $\gamma < 1$ per fare a meno dell'ipotesi (R) non è praticabile. In una prova con $\gamma = 0{,}95$, ottenuta modificando la costante \texttt{gamma} in \texttt{main.cpp}, il cammino ricostruito non raggiunge il Goal nelle istanze con $N = 40$ e $N = 120$, nelle quali la partenza dista dal Goal più di $700$ mosse.
+
+    \item \textbf{Dimensione delle istanze}: a limitare la dimensione delle istanze elaborabili è il tempo, non la memoria. Nelle istanze a corridoio $K$ cresce come $N^2$ e il tempo come $N^4$, per cui raddoppiando $N$ il tempo cresce di un fattore dell'ordine di $16$: a fronte dei $\benchTempoTop{}$ ms misurati per la serpentina con $N = 120$, una serpentina con $N = 240$ richiede già alcuni secondi. La memoria cresce invece come $N^2$: anche con $N = 1000$ le tabelle occupano poche decine di MB. La variante In-Place annulla la memoria ausiliaria, ma riduce quella complessiva solo di circa un terzo (da $24$ a $16$ byte per cella), poiché griglia, $V$ e $\pi$ restano necessarie.
+
+    \item \textbf{Vantaggio dell'In-Place non garantito}: la riduzione del numero di iterazioni dipende dall'orientamento dei cammini ottimi rispetto all'ordine di scansione per righe; nelle istanze con $N$ pari a \benchIstanzeKpari{} le due varianti compiono lo stesso numero di iterazioni.
+
+    \item \textbf{Misure di tempo}: ogni tempo proviene da una singola esecuzione. Per le istanze più piccole ($N \le 30$) si tratta di frazioni di millisecondo, sensibili al rumore di misura; ripetere ogni misura più volte e prenderne la mediana renderebbe i valori più stabili.
+
+    \item \textbf{Misure di memoria}: \texttt{MemoryTracker} conteggia soltanto le allocazioni dinamiche effettuate tramite \texttt{new}, escludendo le variabili locali sullo stack. Per gli algoritmi in esame la misura resta comunque completa, poiché tutte le strutture la cui dimensione dipende da $N$ sono \texttt{std::vector}, allocati tramite \texttt{new}, mentre sullo stack si trova soltanto un numero costante di variabili scalari.
+\end{itemize}
 
 \clearpage
 \subsection{Conclusioni}
