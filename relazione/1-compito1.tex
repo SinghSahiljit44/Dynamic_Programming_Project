@@ -30,11 +30,11 @@ Urto contro un ostacolo o contro il bordo & $-10$ \\
 Raggiungimento della cella Goal & $+100$ \\
 \hline
 \end{tabular}
-\caption{Struttura dei premi del modello.}
+\caption{Struttura dei premi (funzione di ricompensa, vedere dopo) del modello.}
 \end{table}
 
 \noindent
-\textbf{Obiettivo:} Determinare, per ogni cella libera della griglia, il valore della soluzione ottima $V^*$ e ricostruire un cammino ottimo da $S$ a $G$ (grazie alla matrice $\pi^*$).
+\textbf{Obiettivo:} Determinare, per ogni cella libera della griglia, il valore della soluzione ottima $V^*$ (ovvero il valore del cammino minimo tra tale cella e l'obiettivo) e ricostruire un cammino ottimo da $S$ a $G$.
 
 \clearpage
 \subsubsection{Formalizzazione}
@@ -74,7 +74,7 @@ Il problema viene formalizzato come un Processo Decisionale di Markov (MDP) dete
     \]
     \textit{Nota}: Il costo $c_{\text{passo}} = -1$ incentiva il robot a trovare il cammino di lunghezza minima verso $G$.
 
-    \item \textbf{Fattore di sconto} $\gamma = 1$: i premi futuri vengono valutati esattamente quanto quelli immediati, senza alcuna penalizzazione temporale. In combinazione con la struttura dei premi ciò garantisce che il cammino ottimo sia quello di lunghezza minima: percorrendo $L$ mosse da $s$ fino a $G$ il ritorno complessivo vale ($s_0 \neq G$)
+    \item \textbf{Fattore di sconto} $\gamma = 1$: i premi futuri vengono valutati esattamente quanto quelli immediati, senza alcuna penalizzazione temporale. In combinazione con la struttura dei premi ciò garantisce che il cammino ottimo sia quello di lunghezza minima: percorrendo $L$ mosse da $S$ fino a $G$ il ritorno complessivo vale ($s_0 \neq G$)
     \[
     -(L-1) + 100 = 101 - L,
     \]
@@ -120,17 +120,14 @@ Con $\gamma = 1$ la convergenza della Value Iteration non è garantita su qualun
 	\textbf{Ipotesi (R).} Da ogni cella libera $s \in \mathcal{S}$ esiste una sequenza di azioni che conduce alla cella obiettivo $G$.
 \end{quote}
 
-\noindent
-Poiché ogni spostamento tra due celle libere adiacenti può essere compiuto anche in senso inverso, l'ipotesi (R) equivale a richiedere che le celle libere formino un'unica regione connessa.
-
 \noindent\\
 L'ipotesi è necessaria: se una cella libera $s$ non potesse raggiungere $G$, ogni azione disponibile in $s$ produrrebbe un premio negativo ($-1$ oppure $-10$) senza mai incassare il premio terminale $+100$, e si avrebbe $V^*(s) = -\infty$. In quel caso il valore di $s$ diminuirebbe di almeno $1$ a ogni iterazione, $\Delta$ non scenderebbe mai sotto $\epsilon$ e il ciclo \texttt{while} non terminerebbe.
 
 \noindent\\
-Sotto l'ipotesi (R) la convergenza è invece garantita e, come si dimostrerà nell'analisi asintotica, avviene in un numero finito e limitato di iterazioni. L'ipotesi potrebbe essere verificata con una visita preliminare della griglia a partire da $G$; si è preferito invece dotare entrambi gli pseudocodici di un limite di sicurezza sul numero di iterazioni, che ne garantisce comunque la terminazione e segnala l'anomalia.
+Sotto l'ipotesi (R) la convergenza è invece garantita e, come si dimostrerà nell'analisi asintotica, avviene in un numero finito e limitato di iterazioni. si è dato ad entrambi gli pseudocodici un limite di sicurezza sul numero di iterazioni, che ne garantisce comunque la terminazione e segnala l'anomalia.
 
 \paragraph{Come mai non $\gamma < 1$ ?}
-Con un fattore di sconto $\gamma < 1$ la Value Iteration converge su qualunque istanza, anche senza l'ipotesi (R), perché a ogni iterazione il massimo scarto dai valori ottimi si riduce almeno di un fattore $\gamma$. Questa scelta è però inadatta al problema considerato. Un premio ottenuto dopo $d$ mosse viene infatti pesato $\gamma^{d-1}$ e nelle istanze a corridoio la distanza tra $S$ e $G$ è dell'ordine di $N^2$: con $\gamma = 0{,}95$, ad esempio, il premio del Goal raggiunto dopo $707$ mosse (distanza tra $S$ e $G$ nell'istanza con $N = 40$) viene moltiplicato per $0{,}95^{706} \approx 2 \cdot 10^{-16}$. Per il criterio scontato, raggiungere $G$ e vagare indefinitamente sulla griglia (con ritorno che tende a $-1/(1-\gamma) = -20$) hanno quindi quasi lo stesso valore. La Value Iteration si arresta allora prima che l'informazione sul Goal raggiunga le celle più lontane: la politica calcolata non conduce da $S$ a $G$.
+Con un fattore di sconto $\gamma < 1$ la Value Iteration converge su qualunque istanza, anche senza l'ipotesi (R). Questa scelta è però inadatta al problema considerato. Un premio ottenuto dopo $d$ mosse viene infatti pesato $\gamma^{d-1}$ e nelle istanze a corridoio la distanza tra $S$ e $G$ è dell'ordine di $N^2$: con $\gamma = 0{,}95$, ad esempio, il premio del Goal raggiunto dopo $707$ mosse (distanza tra $S$ e $G$ nell'istanza con $N = 40$) viene moltiplicato per $0{,}95^{706} \approx 2 \cdot 10^{-16}$. La Value Iteration si arresta allora prima che l'informazione sul Goal raggiunga le celle più lontane: la politica calcolata non conduce da $S$ a $G$.
 
 \clearpage
 \subsection{Dimostrazione dell'applicabilità della Programmazione Dinamica}
@@ -144,13 +141,13 @@ Nel nostro problema:
 \end{itemize}
 
 \noindent
-Di conseguenza, la soluzione del problema principale per la cella $s$ si compone direttamente a partire dalla soluzione ottima del sottoproblema relativo allo stato adiacente $\delta(s, a^*)$ scelto dalla politica ottima.
+Di conseguenza, la soluzione del problema principale per la cella $s$ si compone direttamente a partire dalla soluzione ottima del sottoproblema relativo allo stato adiacente.
 
 \subsubsection{Secondo Segno Distintivo: Risoluzione dello stesso sottoproblema più volte}
 L'equazione di Bellman definisce $V^*$ in modo circolare: $V^*(s)$ dipende dai valori delle celle adiacenti, che a loro volta dipendono da $V^*(s)$, poiché ogni mossa tra celle libere può essere compiuta anche in senso inverso; in caso di urto, inoltre, $\delta(s,a) = s$ e $V^*(s)$ dipende direttamente da se stesso. Una procedura ricorsiva costruita direttamente su questa equazione non terminerebbe mai.
 
 \noindent\\
-Per ottenere una ricorrenza ben fondata si considera anche il numero di mosse ancora disponibili: sia $V_k(s)$ il massimo ritorno ottenibile partendo da $s$ con al più $k$ mosse. Vale
+Per ottenere una ricorrenza ben fondata si considera anche il numero di mosse ancora disponibili: sia $V_k(s)$ il massimo ritorno ottenibile partendo da $S$ con al più $k$ mosse. Vale
 \[
 V_k(s) = \begin{cases}
 0 & \text{se } k = 0 \text{ oppure } s = G \\
@@ -257,7 +254,7 @@ L'algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH} compone la sequenza ordinata di coor
 \begin{algorithmic}[1]
 \Statex \textbf{CONSTRUCT-OPTIMAL-PATH}$(S, G, \pi, Grid, N)$
 \State $s \gets S$;\ \ $P \gets \text{Queue()}$;\ \ $\text{Enqueue}(P, s)$;\ \ $steps \gets 0$ \label{cop:init}
-\While{$s \ne G$ \textbf{and} $steps < N^2$} \label{cop:while}
+\While{$s \ne G$ \textbf{and} $steps \le N^2$} \label{cop:while}
     \State \Do $a^* \gets \pi[s]$
     \If{$a^* = \text{NIL}$ \textbf{or} $\delta(s, a^*) = s$}
         \State \Then \textbf{error} ``Mossa ottima non definita o diretta contro un ostacolo/bordo''
@@ -297,7 +294,7 @@ T_{\text{Value-Iteration}}(N, K) = \Theta(N^2) + \Theta(K \cdot N^2) = \Theta(K 
 \]
 
 \paragraph{Limitazione del numero di iterazioni $K$.}
-Il parametro $K$ non è indipendente dall'istanza. Sia $d(s,G)$ la distanza minima da $s$ a $G$, misurata in numero di mosse sul grafo delle celle libere. Per $\gamma = 1$ e con inizializzazione $V_0 \equiv 0$ si dimostra per induzione che, dopo $k \ge 1$ iterazioni, per ogni cella $s \ne G$ vale
+Il parametro $K$ non è indipendente dall'istanza. Sia $d(s,G)$ la distanza minima da $s$ a $G$, misurata in numero di mosse. Per $\gamma = 1$ e con inizializzazione $V_0 \equiv 0$ si dimostra per induzione che, dopo $k \ge 1$ iterazioni, per ogni cella $s \ne G$ vale
 \[
 V_k(s) = \begin{cases}
 101 - d(s,G) = V^*(s) & \text{se } d(s,G) \le k \\
