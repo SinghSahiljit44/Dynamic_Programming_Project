@@ -132,7 +132,8 @@ L'equazione di Bellman non può essere applicata ricorsivamente così com'è: da
 \[
 V_k(s) = \max_{a \in \mathcal{A}} \left\{ R(s,a) + \gamma \, V_{k-1}(\delta(s,a)) \right\}, \qquad V_0 \equiv 0, \quad V_k(G) = 0.
 \]
-Ora $k$ diminuisce a ogni chiamata e la ricorsione termina, ma lo stesso sottoproblema viene risolto più volte. La chiamata su $(s, k)$ genera quattro chiamate con $k-1$ mosse, una per ogni direzione cardinale, e così via con $k-2$, $k-3$, $\dots$
+Ora $k$ diminuisce a ogni chiamata e la ricorsione termina, ma lo stesso sottoproblema viene risolto più volte. La chiamata su $(s, k)$ genera quattro chiamate con $k-1$ mosse, una per ogni direzione cardinale, e così via con $k-2$ (in questo caso una per ogni direzione cardinale sarà di nuovo lo stato s iniziale), $k-3$, $\dots$\\
+Ovviamente le sovvrapposizioni non terminano qua, infatti anche durante l'evoluzione delle chiamate ricorsive si generano di nuovo chiamate per lo stesso sottoproblema.
 
 \clearpage
 \subsection{Pseudocodice dell'Algoritmo}
@@ -258,7 +259,7 @@ L'algoritmo \texttt{CONSTRUCT-OPTIMAL-PATH} compone la sequenza ordinata di coor
 \end{algorithmic}
 \end{algorithm}
 
-
+\clearpage
 \subsection{Analisi Asintotica}
 \subsubsection{Complessità Temporale}
 
