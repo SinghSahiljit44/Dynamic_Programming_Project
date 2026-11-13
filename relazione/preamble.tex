@@ -9,14 +9,17 @@
 \usepackage{subcaption}   
 \usepackage{setspace}
 \usepackage{csquotes}
-\usepackage[
-backend=biber,
-style=numeric,
-sorting=ynt
-]{biblatex}
-\addbibresource{bibliography.bib}
-
 \usepackage{longtable}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\floatname{algorithm}{Algoritmo}
+% Stile delle keyword: "do"/"then" all'inizio del corpo, non a fine riga
+\algrenewcommand\algorithmicdo{}
+\algrenewcommand\algorithmicthen{}
+\newcommand{\Do}{\textbf{do} }
+\newcommand{\Then}{\textbf{then} }
+\algdef{SE}[DOFOR]{DoFor}{EndDoFor}[1]{\textbf{do for} #1}{}
+\algtext*{EndDoFor}
 
 \hypersetup{
 bookmarksopen=true, 
